@@ -16,9 +16,10 @@
     Greenwich Observatory: 51&deg; 28' 38"N 0&deg; 0' 0"</p>
     {% endif %}
 
+    {% block body %}{% endblock %}
+</div>
+<div class=ip_box>
     {% if ip != '' %}
     Request from: {{ip}}
     {% endif %}
-
-    {% block body %}{% endblock %}
 </div>
