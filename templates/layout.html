@@ -6,18 +6,7 @@
 
     <p class=tagline>Today&lsquo;s Solar &amp; Lunar ephemerides for:<br/>
 
-    {% if place == 'home' or place == 'erikshus' %}
-    Under the streetlamp: 42&deg; 06' 25"N 76&deg; 15' 47"W</p>
-    {% endif %}
-    {% if place == 'kopernik' %}
-    Kopernik Observatory: 42&deg; 0' 7.18"N 76&deg; 2' 0.48"W</p>
-    {% endif %}
-    {% if place == 'greenwich' %}
-    Greenwich Observatory: 51&deg; 28' 38"N 0&deg; 0' 0"</p>
-    {% endif %}
-    {% if place == 'geocode' %}
     {{address}}</p>
-    {% endif %}
 
     {% block body %}{% endblock %}
 </div>

@@ -1,10 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import os
 import socket
 import urlparse
 import decimal
 import math
+import re
 
 from datetime import datetime, timedelta
 from dateutil.tz import *
@@ -170,14 +172,23 @@ class Twilight(object):
 
     def on_print_ephemeris(self, request):
         # set the location to report for
-        # if str(request.path) == '/':
-        # place = 'geocode'
-        # else:
-        #     place = str(request.path).replace('/', '')
-        place = 'geocode'
-        requester_geocode = geocoder.ip(str(request.remote_addr))  # this is more accurate for locations,
-        address = requester_geocode.address  # save the address first,
-        requester_geocode = geocoder.elevation(requester_geocode.latlng)  # and this gets a correct elevation for it.
+        if str(request.path) == '/home' or str(request.path) == '/erikshus':
+            place = 'home'
+            address = u'Under the streetlamp: 42\N{DEGREE SIGN} 06\' 25\"N 76\N{DEGREE SIGN} 15\' 47\"W'
+            requester_geocode = None
+        elif str(request.path) == '/kopernik':
+            place = 'kopernik'
+            address = u'Kopernik Observatory: 42\N{DEGREE SIGN} 0\' 7.18\"N 76\N{DEGREE SIGN} 2\' 0.48\"W'
+            requester_geocode = None
+        elif str(request.path) == '/greenwich':
+            place = 'greenwich'
+            address = u'Greenwich Observatory: 51\N{DEGREE SIGN} 28\' 38\"N 0\N{DEGREE SIGN} 0\' 0\"'
+            requester_geocode = None
+        else:
+            place = 'geocode'
+            requester_geocode = geocoder.ip(str(request.remote_addr))  # this is more accurate for locations,
+            address = requester_geocode.address  # save the address first,
+            requester_geocode = geocoder.elevation(requester_geocode.latlng)  # and this gets a correct elevation for it.
 
         return self.render_template('print_times.html', error=None, place=place,
                                     sunset_string=Twilight.twilight(self, 'sunset', place,
