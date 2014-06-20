@@ -15,6 +15,7 @@ from werkzeug.wsgi import SharedDataMiddleware
 from jinja2 import Environment, FileSystemLoader
 import redis
 import ephem
+import geocoder
 
 
 def get_hostname(url):
@@ -36,12 +37,12 @@ class Twilight(object):
             Rule('/greenwich', endpoint='print_ephemeris')
         ])
 
-    def twilight(self, which_one, place='home'):
+    def twilight(self, which_one, place='geocode', requester_geocode=None):
 
         # ephemeris elevations
         rise_set_angle, civil_angle, nautical_angle, amateur_angle, astronomical_angle = '-0:34', '-6', '-12', '-15', '-18'
-
         # some useful time spans
+
         a_day, twelve_hours, quarter_hour = timedelta(days=1), timedelta(hours=12), timedelta(minutes=15)
 
         def start_of_astronomical_day(dt):
@@ -61,7 +62,7 @@ class Twilight(object):
 
             if kind == 'rise':
                 try:
-                    if obs.horizon == rise_set_angle:   # object rising
+                    if obs.horizon == rise_set_angle:  # object rising
                         result = ephem.localtime(obs.next_rising(body))
                         event_time = {'printable': "{:%b %d %H:%M:%S} {}".format(result, tzlocal().tzname(dt)),
                                       'data': result}
@@ -73,7 +74,7 @@ class Twilight(object):
                     event_time = {'printable': "N/A for this latitude", 'data': None}
             elif kind == 'set':
                 try:
-                    if obs.horizon == rise_set_angle:   # object setting
+                    if obs.horizon == rise_set_angle:  # object setting
                         result = ephem.localtime(obs.next_setting(body))
                         event_time = {'printable': "{:%b %d %H:%M:%S} {}".format(result, tzlocal().tzname(dt)),
                                       'data': result}
@@ -118,7 +119,10 @@ class Twilight(object):
         elif place == 'greenwich':
             obs = ephem.Observer()
             obs.lat, obs.long, obs.elev = '51:28:38', '0:0:0', 46
-        else:    # Greenwich
+        elif place == 'geocode' and requester_geocode is not None:
+            obs = ephem.Observer()
+            obs.lat, obs.long, obs.elev = str(requester_geocode.lat), str(requester_geocode.lng), requester_geocode.elevation
+        else:  # Greenwich
             obs = ephem.Observer()
             obs.lat, obs.long, obs.elev = '51:28:38', '0:0:0', 46
 
@@ -166,26 +170,45 @@ class Twilight(object):
 
     def on_print_ephemeris(self, request):
         # set the location to report for
-        if str(request.path) == '/':
-            place = 'home'
-        else:
-            place = str(request.path).replace('/', '')
+        # if str(request.path) == '/':
+        # place = 'geocode'
+        # else:
+        #     place = str(request.path).replace('/', '')
+        place = 'geocode'
+        requester_geocode = geocoder.ip(str(request.remote_addr))  # this is more accurate for locations,
+        address = requester_geocode.address  # save the address first,
+        requester_geocode = geocoder.elevation(requester_geocode.latlng)  # and this gets a correct elevation for it.
 
         return self.render_template('print_times.html', error=None, place=place,
-                                    sunset_string=Twilight.twilight(self, 'sunset', place),
-                                    sunrise_string=Twilight.twilight(self, 'sunrise', place),
-                                    civil_end_string=Twilight.twilight(self, 'civil_end', place),
-                                    civil_begin_string=Twilight.twilight(self, 'civil_begin', place),
-                                    nautical_end_string=Twilight.twilight(self, 'nautical_end', place),
-                                    nautical_begin_string=Twilight.twilight(self, 'nautical_begin', place),
-                                    amateur_end_string=Twilight.twilight(self, 'amateur_end', place),
-                                    amateur_begin_string=Twilight.twilight(self, 'amateur_begin', place),
-                                    astro_end_string=Twilight.twilight(self, 'astronomical_end', place),
-                                    astro_begin_string=Twilight.twilight(self, 'astronomical_begin', place),
-                                    moonrise_string=Twilight.twilight(self, 'moonrise', place),
-                                    moonset_string=Twilight.twilight(self, 'moonset', place),
-                                    moon_phase_string=Twilight.twilight(self, 'moon_phase', place),
-                                    moonset_early=Twilight.twilight(self, 'moonset_early', place),
+                                    sunset_string=Twilight.twilight(self, 'sunset', place,
+                                                                    requester_geocode),
+                                    sunrise_string=Twilight.twilight(self, 'sunrise', place,
+                                                                     requester_geocode),
+                                    civil_end_string=Twilight.twilight(self, 'civil_end', place,
+                                                                       requester_geocode),
+                                    civil_begin_string=Twilight.twilight(self, 'civil_begin', place,
+                                                                         requester_geocode),
+                                    nautical_end_string=Twilight.twilight(self, 'nautical_end', place,
+                                                                          requester_geocode),
+                                    nautical_begin_string=Twilight.twilight(self, 'nautical_begin', place,
+                                                                            requester_geocode),
+                                    amateur_end_string=Twilight.twilight(self, 'amateur_end', place,
+                                                                         requester_geocode),
+                                    amateur_begin_string=Twilight.twilight(self, 'amateur_begin', place,
+                                                                           requester_geocode),
+                                    astro_end_string=Twilight.twilight(self, 'astronomical_end', place,
+                                                                       requester_geocode),
+                                    astro_begin_string=Twilight.twilight(self, 'astronomical_begin', place,
+                                                                         requester_geocode),
+                                    moonrise_string=Twilight.twilight(self, 'moonrise', place,
+                                                                      requester_geocode),
+                                    moonset_string=Twilight.twilight(self, 'moonset', place,
+                                                                     requester_geocode),
+                                    moon_phase_string=Twilight.twilight(self, 'moon_phase', place,
+                                                                        requester_geocode),
+                                    moonset_early=Twilight.twilight(self, 'moonset_early', place,
+                                                                    requester_geocode),
+                                    address=address,
                                     ip=request.remote_addr)
 
     def error_404(self):
@@ -220,7 +243,8 @@ def create_app(redis_host='localhost', redis_port=6379, with_static=True):
     app = Twilight({'redis_host': redis_host,
                     'redis_port': redis_port})
     if with_static:
-        app.wsgi_app = SharedDataMiddleware(app.wsgi_app, {'/static': os.path.join(os.path.dirname(__file__), 'static')})
+        app.wsgi_app = SharedDataMiddleware(app.wsgi_app,
+                                            {'/static': os.path.join(os.path.dirname(__file__), 'static')})
 
     return app
 
