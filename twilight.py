@@ -6,7 +6,6 @@ import socket
 import urlparse
 import decimal
 import math
-import re
 
 from datetime import datetime, timedelta
 from dateutil.tz import *
