@@ -14,6 +14,7 @@ from werkzeug.routing import Map, Rule
 from werkzeug.exceptions import HTTPException, NotFound
 from werkzeug.wsgi import SharedDataMiddleware
 from jinja2 import Environment, FileSystemLoader
+
 import redis
 import ephem
 import geocoder
@@ -42,8 +43,8 @@ class Twilight(object):
 
         # ephemeris elevations
         rise_set_angle, civil_angle, nautical_angle, amateur_angle, astronomical_angle = '-0:34', '-6', '-12', '-15', '-18'
-        # some useful time spans
 
+        # some useful time spans
         a_day, twelve_hours, quarter_hour = timedelta(days=1), timedelta(hours=12), timedelta(minutes=15)
 
         def start_of_astronomical_day(dt):
@@ -122,7 +123,9 @@ class Twilight(object):
             obs.lat, obs.long, obs.elev = '51:28:38', '0:0:0', 46
         elif place == 'geocode' and requester_geocode is not None:
             obs = ephem.Observer()
-            obs.lat, obs.long, obs.elev = str(requester_geocode.lat), str(requester_geocode.lng), requester_geocode.elevation
+            obs.lat, obs.long, obs.elev = str(requester_geocode.lat),\
+                                          str(requester_geocode.lng),\
+                                          requester_geocode.elevation
         else:  # Greenwich
             obs = ephem.Observer()
             obs.lat, obs.long, obs.elev = '51:28:38', '0:0:0', 46
@@ -187,7 +190,8 @@ class Twilight(object):
             place = 'geocode'
             requester_geocode = geocoder.ip(str(request.remote_addr))  # this is more accurate for locations,
             address = requester_geocode.address  # save the address first,
-            requester_geocode = geocoder.elevation(requester_geocode.latlng)  # and this gets a correct elevation for it.
+            requester_geocode = geocoder.elevation(
+                requester_geocode.latlng)  # and this gets a correct elevation for it.
 
         return self.render_template('print_times.html', error=None, place=place,
                                     sunset_string=Twilight.twilight(self, 'sunset', place,
