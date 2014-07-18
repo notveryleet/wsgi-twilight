@@ -174,7 +174,7 @@ class Twilight(object):
 
     def on_print_ephemeris(self, request):
         # set the location to report for
-        if str(request.path) == '/home' or str(request.path) == '/erikshus':
+        if str(request.path) in {'/home', '/erikshus'}:
             place = 'home'
             address = u'Under the streetlamp: 42\N{DEGREE SIGN} 06\' 25\"N 76\N{DEGREE SIGN} 15\' 47\"W'
             requester_geocode = None
