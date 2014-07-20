@@ -7,4 +7,4 @@ NOW! With more geocoding!
 
 Currently returns info for the requester's location.
 
-Future directions include allowing for input for arbitrary locations.
+Future directions include allowing input for arbitrary locations.
