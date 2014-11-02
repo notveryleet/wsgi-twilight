@@ -15,7 +15,6 @@ from werkzeug.exceptions import HTTPException, NotFound
 from werkzeug.wsgi import SharedDataMiddleware
 from jinja2 import Environment, FileSystemLoader
 
-import redis
 import ephem
 import geocoder
 
