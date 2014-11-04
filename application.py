@@ -5,21 +5,21 @@ import socket
 import decimal
 import math
 
-from datetime import datetime, timedelta
-from dateutil.tz import *
-
 import ephem
 import geocoder
-
+from datetime import datetime, timedelta
+from dateutil.tz import *
 from flask import Flask
+
 from flask import request
 from flask import render_template
 
+
 # ephemeris elevations
-rise_set_angle, civil_angle, nautical_angle, amateur_angle, astronomical_angle = '-0:34', '-6', '-12', '-15', '-18'
+RISE_SET_ANGLE, CIVIL_ANGLE, NAUTICAL_ANGLE, AMATEUR_ANGLE, ASTRONOMICAL_ANGLE = '-0:34', '-6', '-12', '-15', '-18'
 
 # some useful time spans
-a_day, twelve_hours, quarter_hour = timedelta(days=1), timedelta(hours=12), timedelta(minutes=15)
+A_DAY, TWELVE_HOURS, QUARTER_HOUR = timedelta(days=1), timedelta(hours=12), timedelta(minutes=15)
 
 
 def start_of_astronomical_day(dt):
@@ -28,19 +28,19 @@ def start_of_astronomical_day(dt):
     # Use today if we are past local noon. Use yesterday if we are before local noon (but after midnight).
     # dt needs to be 15 minutes past in order to work for sunrise for some reason
     if 0 <= dt.hour < 12:
-        dt = datetime(dt.year, dt.month, dt.day) - a_day + twelve_hours + quarter_hour
+        dt = datetime(dt.year, dt.month, dt.day) - A_DAY + TWELVE_HOURS + QUARTER_HOUR
     else:
-        dt = datetime(dt.year, dt.month, dt.day) + twelve_hours + quarter_hour
+        dt = datetime(dt.year, dt.month, dt.day) + TWELVE_HOURS + QUARTER_HOUR
 
     return dt
 
 
-def object_ephemeris(body, obs, dt, kind, elev_angle=rise_set_angle):
+def object_ephemeris(body, obs, dt, kind, elev_angle=RISE_SET_ANGLE):
     obs.horizon, obs.date = elev_angle, dt
 
     if kind == 'rise':
         try:
-            if obs.horizon == rise_set_angle:  # object rising
+            if obs.horizon == RISE_SET_ANGLE:  # object rising
                 result = ephem.localtime(obs.next_rising(body))
                 event_time = {'printable': "{:%b %d %H:%M:%S} {}".format(result, tzlocal().tzname(dt)),
                               'data': result}
@@ -52,7 +52,7 @@ def object_ephemeris(body, obs, dt, kind, elev_angle=rise_set_angle):
             event_time = {'printable': "N/A for this latitude", 'data': None}
     elif kind == 'set':
         try:
-            if obs.horizon == rise_set_angle:  # object setting
+            if obs.horizon == RISE_SET_ANGLE:  # object setting
                 result = ephem.localtime(obs.next_setting(body))
                 event_time = {'printable': "{:%b %d %H:%M:%S} {}".format(result, tzlocal().tzname(dt)),
                               'data': result}
@@ -90,13 +90,6 @@ def lunar_phase(dt=None):
 
 
 def twilight(which_one, place='geocode', requester_geocode=None):
-
-    # ephemeris elevations
-    rise_set_angle, civil_angle, nautical_angle, amateur_angle, astronomical_angle = '-0:34', '-6', '-12', '-15', '-18'
-
-    # some useful time spans
-    a_day, twelve_hours, quarter_hour = timedelta(days=1), timedelta(hours=12), timedelta(minutes=15)
-
     # Setup for the observer (default location is above).
     if place == 'home' or place == 'erikshus':
         obs = ephem.Observer()
@@ -125,8 +118,8 @@ def twilight(which_one, place='geocode', requester_geocode=None):
     if which_one == 'sunrise':
         return object_ephemeris(sun, obs, dt, 'rise')['printable']
 
-    templates = [(civil_angle, "civil"), (nautical_angle, "nautical"),
-                 (amateur_angle, "amateur"), (astronomical_angle, "astronomical")]
+    templates = [(CIVIL_ANGLE, "civil"), (NAUTICAL_ANGLE, "nautical"),
+                 (AMATEUR_ANGLE, "amateur"), (ASTRONOMICAL_ANGLE, "astronomical")]
     ones = {'civil_end', 'nautical_end', 'amateur_end', 'astronomical_end',
             'civil_begin', 'nautical_begin', 'amateur_begin', 'astronomical_begin'}
 
@@ -160,6 +153,7 @@ def twilight(which_one, place='geocode', requester_geocode=None):
 
 
 app = Flask(__name__)
+
 
 @app.errorhandler(404)
 def page_not_found(error):
@@ -215,4 +209,3 @@ if __name__ == '__main__':
     app.run(host=socket.gethostname(), port=5555)
 
 ### eof ###
-
