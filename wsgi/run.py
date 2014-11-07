@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import socket
 import decimal
 import math
 
@@ -10,7 +9,6 @@ import geocoder
 from datetime import datetime, timedelta
 from dateutil.tz import *
 from flask import Flask
-
 from flask import request
 from flask import render_template
 
@@ -102,9 +100,9 @@ def twilight(which_one, place='geocode', requester_geocode=None):
         obs.lat, obs.long, obs.elev = '51:28:38', '0:0:0', 46
     elif place == 'geocode' and requester_geocode is not None:
         obs = ephem.Observer()
-        obs.lat, obs.long, obs.elev = str(requester_geocode.lat), \
-                                      str(requester_geocode.lng), \
-                                      requester_geocode.elevation
+        obs.lat = str(requester_geocode.lat)
+        obs.long = str(requester_geocode.lng)
+        obs.elev = requester_geocode.elevation
     else:  # Greenwich
         obs = ephem.Observer()
         obs.lat, obs.long, obs.elev = '51:28:38', '0:0:0', 46
@@ -160,33 +158,37 @@ def page_not_found(error):
     return render_template('404.html'), 404
 
 
-@app.route('/', methods=['GET'])
-@app.route('/home', methods=['GET'])
-@app.route('/erikshus', methods=['GET'])
-@app.route('/kopernik', methods=['GET'])
-@app.route('/greenwich', methods=['GET'])
+@app.route('/')
+@app.route('/auto')
+@app.route('/home')
+@app.route('/erikshus')
+@app.route('/kopernik')
+@app.route('/greenwich')
 def print_ephemeris():
     # set the location to report for
     if str(request.path) in {'/home', '/erikshus'}:
         place = 'home'
+        requester_ip = str(request.headers['X-Forwarded-For'])
         address = u'Under the streetlamp: 42\N{DEGREE SIGN} 06\' 25\"N 76\N{DEGREE SIGN} 15\' 47\"W'
         requester_geocode = None
     elif str(request.path) == '/kopernik':
         place = 'kopernik'
+        requester_ip = str(request.headers['X-Forwarded-For'])
         address = u'Kopernik Observatory: 42\N{DEGREE SIGN} 0\' 7.18\"N 76\N{DEGREE SIGN} 2\' 0.48\"W'
         requester_geocode = None
     elif str(request.path) == '/greenwich':
         place = 'greenwich'
+        requester_ip = str(request.headers['X-Forwarded-For'])
         address = u'Greenwich Observatory: 51\N{DEGREE SIGN} 28\' 38\"N 0\N{DEGREE SIGN} 0\' 0\"'
         requester_geocode = None
     else:
         place = 'geocode'
-        requester_geocode = geocoder.ip(str(request.remote_addr))  # this is more accurate for locations,
-        address = requester_geocode.address  # save the address first,
-        requester_geocode = geocoder.elevation(
-            requester_geocode.latlng)  # and this gets a correct elevation for it.
+        requester_ip = str(request.headers['X-Forwarded-For'])
+        requester_geocode = geocoder.ip(requester_ip)                     # this is more accurate for locations,
+        address = str(requester_geocode.address)                          # save the address first,
+        requester_geocode = geocoder.elevation(requester_geocode.latlng)  # and this gets a correct elevation for it.
 
-    return render_template('print_times.html', error=None, place=place,
+    return render_template('print_times.html', place=place,
                            sunset_string=twilight('sunset', place, requester_geocode),
                            sunrise_string=twilight('sunrise', place, requester_geocode),
                            civil_end_string=twilight('civil_end', place, requester_geocode),
@@ -202,10 +204,10 @@ def print_ephemeris():
                            moon_phase_string=twilight('moon_phase', place, requester_geocode),
                            moonset_early=twilight('moonset_early', place, requester_geocode),
                            address=address,
-                           ip=request.remote_addr)
+                           ip=requester_ip)
 
 
 if __name__ == '__main__':
-    app.run(host=socket.gethostname(), port=5555)
+    app.run(debug='True')
 
-### eof ###
+# eof #
