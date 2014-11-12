@@ -60,7 +60,7 @@ def object_ephemeris(body, obs, dt, kind, elev_angle=RISE_SET_ANGLE):
     else:
         event_time = 'None'
 
-    print event_time
+    # print event_time
     return event_time
 
 
