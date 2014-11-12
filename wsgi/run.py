@@ -203,7 +203,7 @@ def print_ephemeris():
         # else:
         #     requester_ip = request.remote_addr
 
-        return requester_ip
+        print requester_ip
         requester_geocode = geocoder.ip(requester_ip)                     # this is more accurate for locations,
         address = str(requester_geocode.address)                          # save the address first,
         requester_geocode = geocoder.elevation(requester_geocode.latlng)  # and this gets a correct elevation for it.
