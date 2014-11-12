@@ -198,10 +198,10 @@ def print_ephemeris():
         requester_geocode = None
     else:
         place = 'geocode'
-        if request.remote_addr != '127.0.0.1':
-            requester_ip = str(request.headers['X-Forwarded-For'].split(',')[-1])
-        else:
-            requester_ip = request.remote_addr
+        # if request.remote_addr != '127.0.0.1':
+        requester_ip = str(request.headers['X-Forwarded-For'].split(',')[-1])
+        # else:
+        #     requester_ip = request.remote_addr
 
         print requester_ip
         requester_geocode = geocoder.ip(requester_ip)                     # this is more accurate for locations,
