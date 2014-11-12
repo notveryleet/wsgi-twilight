@@ -12,6 +12,7 @@ import arrow
 from flask import Flask
 from flask import request
 from flask import render_template
+from werkzeug.contrib.fixers import ProxyFix
 
 
 # ephemeris elevations
@@ -154,6 +155,7 @@ def twilight(which_one, place='geocode', requester_geocode=None):
         return moonrise['printable']
 
 
+app = ProxyFix(Flask(__name__))
 app = Flask(__name__)
 
 
@@ -172,7 +174,7 @@ def print_ephemeris():
     if str(request.path) in {'/home', '/erikshus'}:
         place = 'home'
         if request.remote_addr != '127.0.0.1':
-            requester_ip = str(request.headers['X-Forwarded-For'])
+            requester_ip = str(request.headers['X-Forwarded-For'].split(',')[-1])
         else:
             requester_ip = request.remote_addr
         print requester_ip
@@ -181,7 +183,7 @@ def print_ephemeris():
     elif str(request.path) == '/kopernik':
         place = 'kopernik'
         if request.remote_addr != '127.0.0.1':
-            requester_ip = str(request.headers['X-Forwarded-For'])
+            requester_ip = str(request.headers['X-Forwarded-For'].split(',')[-1])
         else:
             requester_ip = request.remote_addr
         address = u'Kopernik Observatory: 42\N{DEGREE SIGN} 0\' 7.18\"N 76\N{DEGREE SIGN} 2\' 0.48\"W'
@@ -189,7 +191,7 @@ def print_ephemeris():
     elif str(request.path) == '/greenwich':
         place = 'greenwich'
         if request.remote_addr != '127.0.0.1':
-            requester_ip = str(request.headers['X-Forwarded-For'])
+            requester_ip =  str(request.headers['X-Forwarded-For'].split(',')[-1])
         else:
             requester_ip = request.remote_addr
         address = u'Greenwich Observatory: 51\N{DEGREE SIGN} 28\' 38\"N 0\N{DEGREE SIGN} 0\' 0\"'
@@ -197,7 +199,7 @@ def print_ephemeris():
     else:
         place = 'geocode'
         if request.remote_addr != '127.0.0.1':
-            requester_ip = str(request.headers['X-Forwarded-For'])
+            requester_ip = str(request.headers['X-Forwarded-For'].split(',')[-1])
         else:
             requester_ip = request.remote_addr
 
