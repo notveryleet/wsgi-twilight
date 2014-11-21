@@ -12,7 +12,6 @@ import arrow
 from flask import Flask
 from flask import request
 from flask import render_template
-from werkzeug.contrib.fixers import ProxyFix
 
 
 # ephemeris elevations
@@ -155,7 +154,6 @@ def twilight(which_one, place='geocode', requester_geocode=None):
         return moonrise['printable']
 
 
-app = ProxyFix(Flask(__name__))
 app = Flask(__name__)
 
 
@@ -173,40 +171,27 @@ def print_ephemeris():
     # set the location to report for
     if str(request.path) in {'/home', '/erikshus'}:
         place = 'home'
-        if request.remote_addr != '127.0.0.1':
-            requester_ip = str(request.headers['X-Forwarded-For'].split(', ')[-1])
-        else:
-            requester_ip = request.remote_addr
-        print requester_ip
+        requester_ip = request.access_route[0]
         address = u'Under the streetlamp: 42\N{DEGREE SIGN} 06\' 23.4\"N 76\N{DEGREE SIGN} 15\' 44.9\"W'
         requester_geocode = None
     elif str(request.path) == '/kopernik':
         place = 'kopernik'
-        if request.remote_addr != '127.0.0.1':
-            requester_ip = str(request.headers['X-Forwarded-For'].split(', ')[-1])
-        else:
-            requester_ip = request.remote_addr
+        requester_ip = request.access_route[0]
         address = u'Kopernik Observatory: 42\N{DEGREE SIGN} 0\' 7.18\"N 76\N{DEGREE SIGN} 2\' 0.48\"W'
         requester_geocode = None
     elif str(request.path) == '/greenwich':
         place = 'greenwich'
-        if request.remote_addr != '127.0.0.1':
-            requester_ip =  str(request.headers['X-Forwarded-For'].split(', ')[-1])
-        else:
-            requester_ip = request.remote_addr
+        requester_ip = request.access_route[0]
         address = u'Greenwich Observatory: 51\N{DEGREE SIGN} 28\' 38\"N 0\N{DEGREE SIGN} 0\' 0\"'
         requester_geocode = None
     else:
         place = 'geocode'
-        # if request.remote_addr != '127.0.0.1':
-        requester_ip = str(request.headers['X-Forwarded-For'].split(', ')[-1])
-        # else:
-        #     requester_ip = request.remote_addr
-
-        print requester_ip
+        requester_ip = request.access_route[0]
         requester_geocode = geocoder.ip(requester_ip)                     # this is more accurate for locations,
         address = str(requester_geocode.address)                          # save the address first,
         requester_geocode = geocoder.elevation(requester_geocode.latlng)  # and this gets a correct elevation for it.
+
+    print requester_ip
 
     return render_template('print_times.html', place=place,
                            sunset_string=twilight('sunset', place, requester_geocode),
@@ -228,6 +213,6 @@ def print_ephemeris():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
 
 # eof #
