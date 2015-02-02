@@ -27,9 +27,9 @@ def start_of_astronomical_day(dt):
     # Use today if we are past local noon. Use yesterday if we are before local noon (but after midnight).
     # dt needs to be 15 minutes past in order to work for sunrise for some reason
     if 0 <= dt.hour < 12:
-        dt = dt.replace(hour=12, minute=0, second=0, microsecond=0) - A_DAY - dt.utcoffset()
+        dt = dt.replace(hour=12, minute=15, second=0, microsecond=0) - A_DAY
     else:
-        dt = dt.replace(hour=12, minute=0, second=0, microsecond=0) - dt.utcoffset()
+        dt = dt.replace(hour=12, minute=15, second=0, microsecond=0)
 
     return dt
 
@@ -82,7 +82,7 @@ def lunar_phase(dt=None):
     return description[int(index) & 7]
 
 
-def twilight(which_one, place='geocode', requester_geocode=None):
+def twilight(which_one, place='erikshus', requester_geocode=None):
     # Setup for the observer (default location is above).
     if place == 'home' or place == 'erikshus':
         # erikshus, specifically, the telescope pier in my front yard.
@@ -110,7 +110,6 @@ def twilight(which_one, place='geocode', requester_geocode=None):
     latlng = "{}, {}".format(lat, lng)
     zone = geocoder.timezone(latlng).timezone_id
     dt = start_of_astronomical_day(arrow.now(zone).datetime)
-    # dt = dt.replace(year=2014, month=11, day=24)  # test for an early moonset
 
     # Here comes the Sun
     sun = ephem.Sun(obs)
@@ -191,7 +190,7 @@ def print_ephemeris():
         address = str(requester_geocode.address)                          # save the address first,
         requester_geocode = geocoder.elevation(requester_geocode.latlng)  # and this gets a correct elevation for it.
 
-    print requester_ip
+    # print requester_ip
 
     return render_template('print_times.html', place=place,
                            sunset_string=twilight('sunset', place, requester_geocode),
