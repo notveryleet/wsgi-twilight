@@ -27,9 +27,9 @@ def start_of_astronomical_day(dt):
     # Use today if we are past local noon. Use yesterday if we are before local noon (but after midnight).
     # dt needs to be 15 minutes past in order to work for sunrise for some reason
     if 0 <= dt.hour < 12:
-        dt = dt.replace(hour=12, minute=15, second=0, microsecond=0) - A_DAY
+        dt = dt.replace(hour=13, minute=15, second=0, microsecond=0) - A_DAY
     else:
-        dt = dt.replace(hour=12, minute=15, second=0, microsecond=0)
+        dt = dt.replace(hour=13, minute=15, second=0, microsecond=0)
 
     return dt
 
@@ -116,7 +116,7 @@ def twilight(which_one, place='erikshus', requester_geocode=None):
     if which_one == 'sunset':
         return object_ephemeris(sun, obs, dt, 'set')['printable']
     if which_one == 'sunrise':
-        return object_ephemeris(sun, obs, dt, 'rise')['printable']
+        return object_ephemeris(sun, obs, dt + AN_HOUR, 'rise')['printable']
 
     templates = [(CIVIL_ANGLE, "civil"), (NAUTICAL_ANGLE, "nautical"),
                  (AMATEUR_ANGLE, "amateur"), (ASTRONOMICAL_ANGLE, "astronomical")]
