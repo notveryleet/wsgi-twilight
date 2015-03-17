@@ -6,7 +6,8 @@ import math
 
 import ephem
 import geocoder
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, tzinfo
+from pytz import timezone
 
 import arrow
 from flask import Flask
@@ -34,8 +35,8 @@ def start_of_astronomical_day(dt):
     return dt
 
 
-def object_ephemeris(body, obs, dt, kind, elev_angle=RISE_SET_ANGLE):
-    obs.horizon, obs.date, zone = elev_angle, dt, dt.tzname()
+def object_ephemeris(body, obs, dt, zone, kind, elev_angle=RISE_SET_ANGLE):
+    obs.horizon, obs.date = elev_angle, dt
 
     if kind == 'rise':
         try:
@@ -109,14 +110,19 @@ def twilight(which_one, place='erikshus', requester_geocode=None):
 
     latlng = "{}, {}".format(lat, lng)
     zone = geocoder.timezone(latlng).timezone_id
-    dt = start_of_astronomical_day(arrow.now(zone).datetime)
+    # zone = 'UTC'
+    # dt = start_of_astronomical_day(arrow.now(zone).datetime)
+    dt = start_of_astronomical_day(arrow.utcnow().datetime)
+
+    # dt = arrow.utcnow().datetime
+    dt.astimezone(timezone(zone))
 
     # Here comes the Sun
     sun = ephem.Sun(obs)
     if which_one == 'sunset':
-        return object_ephemeris(sun, obs, dt, 'set')['printable']
+        return object_ephemeris(sun, obs, dt, zone, 'set')['printable']
     if which_one == 'sunrise':
-        return object_ephemeris(sun, obs, dt + AN_HOUR, 'rise')['printable']
+        return object_ephemeris(sun, obs, dt + AN_HOUR, zone, 'rise')['printable']
 
     templates = [(CIVIL_ANGLE, "civil"), (NAUTICAL_ANGLE, "nautical"),
                  (AMATEUR_ANGLE, "amateur"), (ASTRONOMICAL_ANGLE, "astronomical")]
@@ -127,17 +133,17 @@ def twilight(which_one, place='erikshus', requester_geocode=None):
     if which_one in ones:
         for template in templates:
             if which_one == ("{}_end".format(template[1])):
-                return object_ephemeris(sun, obs, dt, 'set', template[0])['printable']
+                return object_ephemeris(sun, obs, dt, zone, 'set', template[0])['printable']
             if which_one == ("{}_begin".format(template[1])):
-                return object_ephemeris(sun, obs, dt, 'rise', template[0])['printable']
+                return object_ephemeris(sun, obs, dt, zone, 'rise', template[0])['printable']
 
     # Now the Moon
     moon = ephem.Moon(obs)
     if which_one == 'moon_phase':
         return lunar_phase(dt)
 
-    moonrise = object_ephemeris(moon, obs, dt, 'rise')
-    moonset = object_ephemeris(moon, obs, dt, 'set')
+    moonrise = object_ephemeris(moon, obs, dt, zone, 'rise')
+    moonset = object_ephemeris(moon, obs, dt, zone, 'set')
 
     if which_one == 'moonset_ante_astro_noon_p':
         if moonset['data'].day == dt.day and 12 <= moonset['data'].hour <= 23:
@@ -147,7 +153,7 @@ def twilight(which_one, place='erikshus', requester_geocode=None):
 
     if which_one == 'moonset':
         if not (12 <= moonset['data'].hour <= 23) and (moonset['data'] < moonrise['data']) :
-            moonset = object_ephemeris(moon, obs, dt + A_DAY, 'set')
+            moonset = object_ephemeris(moon, obs, dt + A_DAY, zone, 'set')
         return moonset['printable']
     if which_one == 'moonrise':
         return moonrise['printable']
