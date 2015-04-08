@@ -6,5 +6,5 @@ setup(name='Twilight',
       author='Erik Sigurd Young',
       author_email='sigurd@lambda-conspiracy.net',
       url='https://github.com/lambda-conspiracy/wsgi-twilight.git',
-      install_requires=['Flask>=0.7.2', 'MarkupSafe', 'python-dateutil', 'DateTime', 'ephem', 'geocoder', 'arrow', 'pytz'],
+      install_requires=['Flask>=0.7.2', 'MarkupSafe', 'python-dateutil', 'DateTime', 'ephem', 'geocoder'],
      )
