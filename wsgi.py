@@ -169,7 +169,7 @@ def twilight(which_one, place='erikshus', requester_geocode=None, zone=None):
 
 
 application = Flask(__name__)
-# application.config['DEBUG'] = True
+application.config['DEBUG'] = True
 
 
 @application.errorhandler(404)
