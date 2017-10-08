@@ -242,6 +242,6 @@ def print_ephemeris():
 
 
 if __name__ == '__main__':
-    application.run()
+    application.run(port=8080)
 
 # eof #
