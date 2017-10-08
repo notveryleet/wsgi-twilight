@@ -23,6 +23,8 @@ RISE_SET_ANGLE, CIVIL_ANGLE, NAUTICAL_ANGLE, AMATEUR_ANGLE, ASTRONOMICAL_ANGLE =
 # some useful time spans
 A_DAY, AN_HOUR, TWELVE_HOURS = timedelta(days=1), timedelta(hours=1), timedelta(hours=12)
 
+GOOGLE_API_KEY = 'AIzaSyDHhHgOtNxf7Wa5cOY7Mt2ZU8IaqVTuaLo'
+
 
 def start_of_astronomical_day(dt):
     # This takes a date and returns a date which would be the beginning of the astronomical day (local noon)
@@ -188,32 +190,36 @@ def print_ephemeris():
     if str(request.path) in {'/home', '/erikshus'}:
         place = 'home'
         requester_ip = request.access_route[0]
-        requester_geocode = geocoder.google('42.106485, -76.262458')
+        requester_geocode = geocoder.google('42.106485, -76.262458', key=GOOGLE_API_KEY)
         address = u'Under the streetlamp: 42\N{DEGREE SIGN} 06\' 23.4\"N 76\N{DEGREE SIGN} 15\' 44.9\"W'
     elif str(request.path) == '/stjohns':
         place = 'stjohns'
         requester_ip = request.access_route[0]
-        requester_geocode = geocoder.google('47.5675, -52.7072')
+        requester_geocode = geocoder.google('47.5675, -52.7072', key=GOOGLE_API_KEY)
         address = u'St. John\'s: 47.5675\N{DEGREE SIGN}N 52.7072\N{DEGREE SIGN}W'
     elif str(request.path) == '/kopernik':
         place = 'kopernik'
         requester_ip = request.access_route[0]
-        requester_geocode = geocoder.google('42.001994, -76.033467')
+        requester_geocode = geocoder.google('42.001994, -76.033467', key=GOOGLE_API_KEY)
         address = u'Kopernik Observatory: 42\N{DEGREE SIGN} 0\' 7.18\"N 76\N{DEGREE SIGN} 2\' 0.48\"W'
     elif str(request.path) == '/greenwich':
         place = 'greenwich'
         requester_ip = request.access_route[0]
-        requester_geocode = geocoder.google('51.476853, -0.0005002')
+        requester_geocode = geocoder.google('51.476853, -0.0005002', key=GOOGLE_API_KEY)
         address = u'Greenwich Observatory: 51\N{DEGREE SIGN} 28\' 38\"N 0\N{DEGREE SIGN} 0\' 0\"'
     else:
         place = 'geocode'
         requester_ip = request.access_route[0]
-        requester_geocode = geocoder.ip(requester_ip)                     # this is more accurate for locations,
-        address = str(requester_geocode.address)                          # save the address first,
+        if requester_ip != '127.0.0.1':
+            requester_geocode = geocoder.ip(requester_ip, key=GOOGLE_API_KEY)                     # this is more accurate for locations,
+            address = str(requester_geocode.address)                          # save the address first,
+        else:
+            place = 'home'
+            requester_geocode = geocoder.google('42.106485, -76.262458', key=GOOGLE_API_KEY)
+            address = u'Under the streetlamp: 42\N{DEGREE SIGN} 06\' 23.4\"N 76\N{DEGREE SIGN} 15\' 44.9\"W'
 
-    google_key = 'AIzaSyDHhHgOtNxf7Wa5cOY7Mt2ZU8IaqVTuaLo'
-    requester_geocode = geocoder.elevation(requester_geocode.latlng, )      # and this gets a correct elevation for it.
-    zone = geocoder.timezone(requester_geocode.location).timeZoneId
+    requester_geocode = geocoder.elevation(requester_geocode.latlng, key=GOOGLE_API_KEY)      # and this gets a correct elevation for it.
+    zone = geocoder.timezone(requester_geocode.location, key=GOOGLE_API_KEY).timeZoneId
 
     return render_template('print_times.html',
                            place=place,
