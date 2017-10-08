@@ -35,16 +35,16 @@
     <tr>
         <td align="center" colspan=4><p>It is a {{moon_phase_string}}</p></td>
     </tr>
-    {% if moonset_early %}
+    {% if moonset_ante_astro_noon_p == 'True' %}
     <tr>
-        <td align="right">Moonset:</td>
-        <td>{{moonset_string}}</td>
+        <td align="right">Moonrise:</td>
+        <td>{{moonrise_string}}</td>
         <td align="right"></td>
         <td></td>
     </tr>
     <tr>
-        <td align="right">Moonrise:</td>
-        <td>{{moonrise_string}}</td>
+        <td align="right">Moonset:</td>
+        <td>{{moonset_string}}</td>
         <td align="right"></td>
         <td></td>
     </tr>
