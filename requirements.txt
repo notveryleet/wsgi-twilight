@@ -1,3 +1,5 @@
+pip
+setuptools
 gunicorn
 Flask>=0.7.2
 MarkupSafe
