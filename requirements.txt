@@ -7,7 +7,4 @@ ephem
 geocoder
 arrow
 pytz
-urllib3
-ndg-httpsclient
-pyasn1
 
