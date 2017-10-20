@@ -11,11 +11,7 @@ import arrow
 from flask import Flask
 from flask import request
 from flask import render_template
-import urllib3.contrib.pyopenssl
 
-
-# fixup the old python on OpenShift
-urllib3.contrib.pyopenssl.inject_into_urllib3()
 
 # ephemeris elevations
 RISE_SET_ANGLE, CIVIL_ANGLE, NAUTICAL_ANGLE, AMATEUR_ANGLE, ASTRONOMICAL_ANGLE = '-0:34', '-6', '-12', '-15', '-18'
