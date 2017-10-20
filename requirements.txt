@@ -1,5 +1,5 @@
 gunicorn
-Flask>=0.7.2
+Flask
 MarkupSafe
 python-dateutil
 DateTime
