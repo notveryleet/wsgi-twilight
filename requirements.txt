@@ -8,7 +8,7 @@ geocoder
 arrow
 pytz
 urllib3
-pyopenssl
+#pyopenssl
 ndg-httpsclient
 pyasn1
 
