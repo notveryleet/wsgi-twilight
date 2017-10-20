@@ -1,4 +1,4 @@
-gunicorn
+mod_wsgi
 Flask
 MarkupSafe
 python-dateutil
