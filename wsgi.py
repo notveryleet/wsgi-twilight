@@ -233,7 +233,8 @@ def print_ephemeris():
                            moon_phase_string=twilight('moon_phase', place, requester_geocode, zone),
                            moonset_ante_astro_noon_p=twilight('moonset_ante_astro_noon_p', place, requester_geocode, zone),
                            address=address,
-                           ip=requester_ip)
+                           ip=requester_ip,
+                           geocode=requester_geocode)
 
 
 if __name__ == '__main__':

@@ -4,56 +4,56 @@
 <table align="center">
     <tr>
         <td align="right">Sunset:</td>
-        <td>{{sunset_string}}</td>
+        <td>{{ sunset_string }}</td>
         <td align="right">Sunrise:</td>
-        <td>{{sunrise_string}}</td>
+        <td>{{ sunrise_string }}</td>
     </tr>
     <tr>
         <td align="right">Civil twilight ends:</td>
-        <td>{{civil_end_string}}</td>
+        <td>{{ civil_end_string }}</td>
         <td align="right">begins:</td>
-        <td>{{civil_begin_string}}</td>
+        <td>{{ civil_begin_string }}</td>
     </tr>
     <tr>
         <td align="right">Nautical twilight ends:</td>
-        <td>{{nautical_end_string}}</td>
+        <td>{{ nautical_end_string }}</td>
         <td align="right">begins:</td>
-        <td>{{nautical_begin_string}}</td>
+        <td>{{ nautical_begin_string }}</td>
     </tr>
     <tr>
         <td align="right">Amateur twilight ends:</td>
-        <td>{{amateur_end_string}}</td>
+        <td>{{ amateur_end_string }}</td>
         <td align="right">begins:</td>
-        <td>{{amateur_begin_string}}</td>
+        <td>{{ amateur_begin_string }}</td>
     </tr>
     <tr>
         <td align="right">Astronomical twilight ends:</td>
-        <td>{{astro_end_string}}</td>
+        <td>{{ astro_end_string }}</td>
         <td align="right">begins:</td>
-        <td>{{astro_begin_string}}</td>
+        <td>{{ astro_begin_string }}</td>
     </tr>
     <tr>
-        <td align="center" colspan=4><p>It is a {{moon_phase_string}}</p></td>
+        <td align="center" colspan=4><p>It is a {{ moon_phase_string }}</p></td>
     </tr>
     {% if moonset_ante_astro_noon_p == 'True' %}
     <tr>
         <td align="right">Moonrise:</td>
-        <td>{{moonrise_string}}</td>
+        <td>{{ moonrise_string }}</td>
         <td align="right"></td>
         <td></td>
     </tr>
     <tr>
         <td align="right">Moonset:</td>
-        <td>{{moonset_string}}</td>
+        <td>{{ moonset_string }}</td>
         <td align="right"></td>
         <td></td>
     </tr>
     {% else %}
     <tr>
         <td align="right">Moonrise:</td>
-        <td>{{moonrise_string}}</td>
+        <td>{{ moonrise_string }}</td>
         <td align="right">Moonset:</td>
-        <td>{{moonset_string}}</td>
+        <td>{{ moonset_string }}</td>
     </tr>
     {% endif %}
 </table>

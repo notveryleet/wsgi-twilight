@@ -6,15 +6,16 @@
 
     <p class=tagline>Today&lsquo;s Solar &amp; Lunar ephemerides for:<br/>
 
-    {{address}}</p>
+    {{ address }}</p>
 
     {% block body %}{% endblock %}
 </div>
 <div class=ip_box>
+    {{ geocode }}
     <a href="/">auto</a>&emsp;&emsp;<a href="/erikshus">erikshus</a>&emsp;&emsp;
     <a href="/kopernik">Kopernik</a>&emsp;&emsp;<a href="/stjohns">St. Johns</a>&emsp;&emsp;
     <a href="/greenwich">Greenwich</a><p></p>
     {% if ip != '' %}
-       Request from: {{ip}}
+       Request from: {{ ip }}
     {% endif %}
 </div>
