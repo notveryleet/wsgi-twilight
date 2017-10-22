@@ -234,7 +234,7 @@ def print_ephemeris():
                            moonset_ante_astro_noon_p=twilight('moonset_ante_astro_noon_p', place, requester_geocode, zone),
                            address=address,
                            ip=requester_ip,
-                           geocode=requester_geocode)
+                           geocode=requester_geocode.latlng)
 
 
 if __name__ == '__main__':
