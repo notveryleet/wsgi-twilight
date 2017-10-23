@@ -118,6 +118,8 @@ def twilight(which_one, place='erikshus', requester_geocode=None, zone=None):
     obs.lat, obs.long, latlng, obs.elev = lat, lng, "{}, {}".format(lat, lng), elev
     dt = start_of_astronomical_day(arrow.utcnow().datetime)
 
+    print(obs.lat, obs.long, latlng, obs.elev, dt)
+
     # Here comes the Sun
     if which_one == 'sunset':
         sun = ephem.Sun(obs)
