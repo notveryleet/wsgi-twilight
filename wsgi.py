@@ -110,7 +110,7 @@ def twilight(which_one, place='erikshus', requester_geocode=None, zone=None):
     elif place == 'greenwich':
         lat, lng, elev = '51.476853', '-0.0005002', 47.15256
     elif place == 'geocode' and requester_geocode is not None:
-        lat, lng, elev = str(requester_geocode.lat), str(requester_geocode.lng), requester_geocode.elevation
+        lat, lng, elev = str(requester_geocode.lat), str(requester_geocode.lng), requester_geocode.elevation.elevation
     else:  # Greenwich
         lat, lng, elev = '51.476853', '-0.0005002', 47.15256
 
@@ -211,7 +211,7 @@ def print_ephemeris():
         address = u'Greenwich Observatory: 51\N{DEGREE SIGN} 28\' 38\"N 0\N{DEGREE SIGN} 0\' 0\"'
     else:
         place = 'geocode'
-        requester_ip = request.access_route[0]
+        requester_ip = '67.251.78.136' #request.access_route[0]
 
         if requester_ip != '127.0.0.1':
             requester_geocode = geocoder.ip(requester_ip, key=GOOGLE_API_KEY)  # this is more accurate for locations,
@@ -223,9 +223,8 @@ def print_ephemeris():
             latlng = requester_geocode.latlng
             address = u'Under the streetlamp: 42\N{DEGREE SIGN} 06\' 23.4\"N 76\N{DEGREE SIGN} 15\' 44.9\"W'
 
-    requester_geocode = geocoder.elevation(requester_geocode.latlng,
-                                       key=GOOGLE_API_KEY)  # and this gets a correct elevation for it.
-    zone = geocoder.timezone(requester_geocode.location, key=GOOGLE_API_KEY).timeZoneId
+    requester_geocode.elevation = geocoder.elevation(requester_geocode.latlng, key=GOOGLE_API_KEY)  # and this gets a correct elevation for it.
+    zone = geocoder.timezone(requester_geocode.latlng, key=GOOGLE_API_KEY).timeZoneId
 
     return render_template('print_times.html',
                        place=place,
@@ -245,7 +244,7 @@ def print_ephemeris():
                        moonset_ante_astro_noon_p=twilight('moonset_ante_astro_noon_p', place, requester_geocode, zone),
                        address=address,
                        latlng=latlng,
-                       elevation=requester_geocode.elevation,
+                       elevation=requester_geocode.elevation.elevation,
                        ip=requester_ip)
 
 if __name__ == '__main__':
