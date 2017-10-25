@@ -209,6 +209,7 @@ def print_ephemeris():
         address = u'Greenwich Observatory: 51\N{DEGREE SIGN} 28\' 38\"N 0\N{DEGREE SIGN} 0\' 0\"'
     else:
         place = 'geocode'
+        requester_ip = request.access_route[0]
         if requester_ip != '127.0.0.1':
             requester_geocode = geocoder.ip(requester_ip, key=GOOGLE_API_KEY)  # this is more accurate for locations,
             latlng = requester_geocode.latlng
