@@ -100,6 +100,8 @@ def lunar_phase(dt, zone):
 
 
 def twilight(which_one, place='erikshus', requester_geocode=None):
+    elev = requester_geocode.elevation.meters
+    zone = requester_geocode.timeZoneId
     # Setup for the observer (default location is above).
     if place == 'home' or place == 'erikshus':
         # erikshus, specifically, the telescope pier in my front yard.
@@ -111,12 +113,9 @@ def twilight(which_one, place='erikshus', requester_geocode=None):
     elif place == 'greenwich':
         lat, lng, elev = '51.476853', '-0.0005002', 47.15256
     elif place == 'geocode' and requester_geocode is not None:
-        lat, lng, elev = str(requester_geocode.lat), str(requester_geocode.lng), requester_geocode.elevation.meters
-        zone = requester_geocode.timeZoneId
+        lat, lng = str(requester_geocode.lat), str(requester_geocode.lng)
     else:  # Greenwich
-        lat, lng, elev = '51.476853', '-0.0005002', 47.15256
-
-    zone = requester_geocode.timeZoneId
+        lat, lng = '51.476853', '-0.0005002', 47.15256
 
     obs = ephem.Observer()
     obs.lat, obs.long, latlng, obs.elev = lat, lng, "{}, {}".format(lat, lng), elev
@@ -213,10 +212,10 @@ def print_ephemeris():
             latlng = requester_geocode.latlng
             address = u'Greenwich Observatory: 51\N{DEGREE SIGN} 28\' 38\"N 0\N{DEGREE SIGN} 0\' 0\"'
         else:
-            place = 'geocode'
             requester_ip = request.access_route[0]
 
             if requester_ip != '127.0.0.1':
+                place = 'geocode'
                 requester_geocode = geocoder.ip(requester_ip, key=GOOGLE_API_KEY)
                 latlng = requester_geocode.latlng
                 address = str(requester_geocode.address)  # save the address first,
@@ -226,10 +225,10 @@ def print_ephemeris():
                 latlng = requester_geocode.latlng
                 address = u'Under the streetlamp: 42\N{DEGREE SIGN} 06\' 23.4\"N 76\N{DEGREE SIGN} 15\' 44.9\"W'
 
-        requester_geocode.elevation = geocoder.elevation(requester_geocode.latlng,
+        requester_geocode.elevation = geocoder.elevation(latlng,
                                                          key=GOOGLE_API_KEY,
                                                          session=session)  # get an elevation for it.
-        requester_geocode.timeZoneId = geocoder.timezone(requester_geocode.latlng,
+        requester_geocode.timeZoneId = geocoder.timezone(latlng,
                                                          key=GOOGLE_API_KEY,
                                                          session=session).timeZoneId
 
