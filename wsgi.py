@@ -4,6 +4,7 @@
 import decimal
 import math
 from datetime import datetime, timedelta
+import requests
 
 import arrow
 import ephem
@@ -98,7 +99,7 @@ def lunar_phase(dt, zone):
     return description[int(index) & 7]
 
 
-def twilight(which_one, place='erikshus', requester_geocode=None, zone=None):
+def twilight(which_one, place='erikshus', requester_geocode=None):
     # Setup for the observer (default location is above).
     if place == 'home' or place == 'erikshus':
         # erikshus, specifically, the telescope pier in my front yard.
@@ -110,9 +111,12 @@ def twilight(which_one, place='erikshus', requester_geocode=None, zone=None):
     elif place == 'greenwich':
         lat, lng, elev = '51.476853', '-0.0005002', 47.15256
     elif place == 'geocode' and requester_geocode is not None:
-        lat, lng, elev = str(requester_geocode.lat), str(requester_geocode.lng), requester_geocode.elevation.elevation
+        lat, lng, elev = str(requester_geocode.lat), str(requester_geocode.lng), requester_geocode.elevation.meters
+        zone = requester_geocode.timeZoneId
     else:  # Greenwich
         lat, lng, elev = '51.476853', '-0.0005002', 47.15256
+
+    zone = requester_geocode.timeZoneId
 
     obs = ephem.Observer()
     obs.lat, obs.long, latlng, obs.elev = lat, lng, "{}, {}".format(lat, lng), elev
@@ -183,65 +187,71 @@ def page_not_found(error):
 @application.route('/greenwich')
 def print_ephemeris():
     # set the location to report for
-    if str(request.path) in {'/home', '/erikshus'}:
-        place = 'home'
-        requester_ip = request.access_route[0]
-        requester_geocode = geocoder.google('42.106485, -76.262458', key=GOOGLE_API_KEY)
-        latlng = requester_geocode.latlng
-        address = u'Under the streetlamp: 42\N{DEGREE SIGN} 06\' 23.4\"N 76\N{DEGREE SIGN} 15\' 44.9\"W'
-    elif str(request.path) == '/stjohns':
-        place = 'stjohns'
-        requester_ip = request.access_route[0]
-        requester_geocode = geocoder.google('47.5675, -52.7072', key=GOOGLE_API_KEY)
-        latlng = requester_geocode.latlng
-        address = u'St. John\'s: 47.5675\N{DEGREE SIGN}N 52.7072\N{DEGREE SIGN}W'
-    elif str(request.path) == '/kopernik':
-        place = 'kopernik'
-        requester_ip = request.access_route[0]
-        requester_geocode = geocoder.google('42.001994, -76.033467', key=GOOGLE_API_KEY)
-        latlng = requester_geocode.latlng
-        address = u'Kopernik Observatory: 42\N{DEGREE SIGN} 0\' 7.18\"N 76\N{DEGREE SIGN} 2\' 0.48\"W'
-    elif str(request.path) == '/greenwich':
-        place = 'greenwich'
-        requester_ip = request.access_route[0]
-        requester_geocode = geocoder.google('51.476853, -0.0005002', key=GOOGLE_API_KEY)
-        latlng = requester_geocode.latlng
-        address = u'Greenwich Observatory: 51\N{DEGREE SIGN} 28\' 38\"N 0\N{DEGREE SIGN} 0\' 0\"'
-    else:
-        place = 'geocode'
-        requester_ip = request.access_route[0]
-        if requester_ip != '127.0.0.1':
-            requester_geocode = geocoder.ip(requester_ip, key=GOOGLE_API_KEY)  # this is more accurate for locations,
-            latlng = requester_geocode.latlng
-            address = str(requester_geocode.address)  # save the address first,
-        else:
+    with requests.Session() as session:
+        if str(request.path) in {'/home', '/erikshus'}:
             place = 'home'
+            requester_ip = request.access_route[0]
             requester_geocode = geocoder.google('42.106485, -76.262458', key=GOOGLE_API_KEY)
             latlng = requester_geocode.latlng
             address = u'Under the streetlamp: 42\N{DEGREE SIGN} 06\' 23.4\"N 76\N{DEGREE SIGN} 15\' 44.9\"W'
+        elif str(request.path) == '/stjohns':
+            place = 'stjohns'
+            requester_ip = request.access_route[0]
+            requester_geocode = geocoder.google('47.5675, -52.7072', key=GOOGLE_API_KEY)
+            latlng = requester_geocode.latlng
+            address = u'St. John\'s: 47.5675\N{DEGREE SIGN}N 52.7072\N{DEGREE SIGN}W'
+        elif str(request.path) == '/kopernik':
+            place = 'kopernik'
+            requester_ip = request.access_route[0]
+            requester_geocode = geocoder.google('42.001994, -76.033467', key=GOOGLE_API_KEY)
+            latlng = requester_geocode.latlng
+            address = u'Kopernik Observatory: 42\N{DEGREE SIGN} 0\' 7.18\"N 76\N{DEGREE SIGN} 2\' 0.48\"W'
+        elif str(request.path) == '/greenwich':
+            place = 'greenwich'
+            requester_ip = request.access_route[0]
+            requester_geocode = geocoder.google('51.476853, -0.0005002', key=GOOGLE_API_KEY)
+            latlng = requester_geocode.latlng
+            address = u'Greenwich Observatory: 51\N{DEGREE SIGN} 28\' 38\"N 0\N{DEGREE SIGN} 0\' 0\"'
+        else:
+            place = 'geocode'
+            requester_ip = request.access_route[0]
 
-    requester_geocode.elevation = geocoder.elevation(requester_geocode.latlng, key=GOOGLE_API_KEY)  # and this gets a correct elevation for it.
-    zone = geocoder.timezone(requester_geocode.latlng, key=GOOGLE_API_KEY).timeZoneId
+            if requester_ip != '127.0.0.1':
+                requester_geocode = geocoder.ip(requester_ip, key=GOOGLE_API_KEY)
+                latlng = requester_geocode.latlng
+                address = str(requester_geocode.address)  # save the address first,
+            else:
+                place = 'home'
+                requester_geocode = geocoder.google('42.106485, -76.262458', key=GOOGLE_API_KEY)
+                latlng = requester_geocode.latlng
+                address = u'Under the streetlamp: 42\N{DEGREE SIGN} 06\' 23.4\"N 76\N{DEGREE SIGN} 15\' 44.9\"W'
+
+        requester_geocode.elevation = geocoder.elevation(requester_geocode.latlng,
+                                                         key=GOOGLE_API_KEY,
+                                                         session=session)  # get an elevation for it.
+        requester_geocode.timeZoneId = geocoder.timezone(requester_geocode.latlng,
+                                                         key=GOOGLE_API_KEY,
+                                                         session=session).timeZoneId
 
     return render_template('print_times.html',
                        place=place,
-                       sunset_string=twilight('sunset', place, requester_geocode, zone),
-                       sunrise_string=twilight('sunrise', place, requester_geocode, zone),
-                       civil_end_string=twilight('civil_end', place, requester_geocode, zone),
-                       civil_begin_string=twilight('civil_begin', place, requester_geocode, zone),
-                       nautical_end_string=twilight('nautical_end', place, requester_geocode, zone),
-                       nautical_begin_string=twilight('nautical_begin', place, requester_geocode, zone),
-                       amateur_end_string=twilight('amateur_end', place, requester_geocode, zone),
-                       amateur_begin_string=twilight('amateur_begin', place, requester_geocode, zone),
-                       astro_end_string=twilight('astronomical_end', place, requester_geocode, zone),
-                       astro_begin_string=twilight('astronomical_begin', place, requester_geocode, zone),
-                       moonrise_string=twilight('moonrise', place, requester_geocode, zone),
-                       moonset_string=twilight('moonset', place, requester_geocode, zone),
-                       moon_phase_string=twilight('moon_phase', place, requester_geocode, zone),
-                       moonset_ante_astro_noon_p=twilight('moonset_ante_astro_noon_p', place, requester_geocode, zone),
+                       sunset_string=twilight('sunset', place, requester_geocode),
+                       sunrise_string=twilight('sunrise', place, requester_geocode),
+                       civil_end_string=twilight('civil_end', place, requester_geocode),
+                       civil_begin_string=twilight('civil_begin', place, requester_geocode),
+                       nautical_end_string=twilight('nautical_end', place, requester_geocode),
+                       nautical_begin_string=twilight('nautical_begin', place, requester_geocode),
+                       amateur_end_string=twilight('amateur_end', place, requester_geocode),
+                       amateur_begin_string=twilight('amateur_begin', place, requester_geocode),
+                       astro_end_string=twilight('astronomical_end', place, requester_geocode),
+                       astro_begin_string=twilight('astronomical_begin', place, requester_geocode),
+                       moonrise_string=twilight('moonrise', place, requester_geocode),
+                       moonset_string=twilight('moonset', place, requester_geocode),
+                       moon_phase_string=twilight('moon_phase', place, requester_geocode),
+                       moonset_ante_astro_noon_p=twilight('moonset_ante_astro_noon_p', place, requester_geocode),
                        address=address,
                        latlng=latlng,
-                       elevation=requester_geocode.elevation.elevation,
+                       elevation=requester_geocode.elevation.meters,
                        ip=requester_ip)
 
 if __name__ == '__main__':

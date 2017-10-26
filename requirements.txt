@@ -1,4 +1,5 @@
 mod_wsgi
+requests
 Flask
 MarkupSafe
 python-dateutil
