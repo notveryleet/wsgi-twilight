@@ -105,7 +105,7 @@ def twilight(which_one, place='erikshus', requester_geocode=None):
     # Setup for the observer (default location is above).
     if place == 'home' or place == 'erikshus':
         lat, lng, elev = '35.6921944', '-80.4357413', 214
-    elif place == 'eriksgammelhus':
+    elif place == 'gammelhus':
         # erikshus, specifically, the telescope pier in my front yard.
         lat, lng, elev = '42.106485', '-76.262458', 248.7168
     elif place == 'kopernik':
@@ -187,6 +187,7 @@ def page_not_found(error):
 @application.route('/')
 @application.route('/home')
 @application.route('/erikshus')
+@application.route('/gammelhus')
 @application.route('/stjohns')
 @application.route('/kopernik')
 @application.route('/greenwich')
@@ -199,8 +200,8 @@ def print_ephemeris():
             requester_geocode = geocoder.google('35.6921944, -80.4357413', key=GOOGLE_API_KEY)
             latlng = requester_geocode.latlng
             address = u'On Library Park: 35\N{DEGREE SIGN} 41\' 31.9\"N 80\N{DEGREE SIGN} 26\' 8.67\"W'
-        if str(request.path) == '/eriksgammelhus':
-            place = 'home'
+        if str(request.path) == '/gammelhus':
+            place = 'gammelhus'
             requester_ip = request.access_route[0]
             requester_geocode = geocoder.google('42.106485, -76.262458', key=GOOGLE_API_KEY)
             latlng = requester_geocode.latlng
