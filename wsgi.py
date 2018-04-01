@@ -104,6 +104,8 @@ def twilight(which_one, place='erikshus', requester_geocode=None):
     zone = requester_geocode.timeZoneId
     # Setup for the observer (default location is above).
     if place == 'home' or place == 'erikshus':
+        lat, lng, elev = '35.6921944', '-80.4357413', 214
+    elif place == 'eriksgammelhus':
         # erikshus, specifically, the telescope pier in my front yard.
         lat, lng, elev = '42.106485', '-76.262458', 248.7168
     elif place == 'kopernik':
