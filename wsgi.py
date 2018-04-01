@@ -115,7 +115,7 @@ def twilight(which_one, place='erikshus', requester_geocode=None):
     elif place == 'geocode' and requester_geocode is not None:
         lat, lng = str(requester_geocode.lat), str(requester_geocode.lng)
     else:  # Greenwich
-        lat, lng = '51.476853', '-0.0005002', 47.15256
+        lat, lng, elev = '51.476853', '-0.0005002', 47.15256
 
     obs = ephem.Observer()
     obs.lat, obs.long, latlng, obs.elev = lat, lng, "{}, {}".format(lat, lng), elev
@@ -123,9 +123,11 @@ def twilight(which_one, place='erikshus', requester_geocode=None):
 
     # Here comes the Sun
     if which_one == 'sunset':
+        # noinspection PyUnresolvedReferences
         sun = ephem.Sun(obs)
         return object_ephemeris(sun, obs, dt, zone, 'set')['printable']
     if which_one == 'sunrise':
+        # noinspection PyUnresolvedReferences
         sun = ephem.Sun(obs)
         return object_ephemeris(sun, obs, dt + AN_HOUR, zone, 'rise')['printable']
 
@@ -173,11 +175,13 @@ def twilight(which_one, place='erikshus', requester_geocode=None):
 application = Flask(__name__)
 
 
+# noinspection PyUnusedLocal
 @application.errorhandler(404)
 def page_not_found(error):
     return render_template('404.html'), 404
 
 
+# noinspection PyUnusedLocal
 @application.route('/')
 @application.route('/home')
 @application.route('/erikshus')
@@ -188,6 +192,12 @@ def print_ephemeris():
     # set the location to report for
     with requests.Session() as session:
         if str(request.path) in {'/home', '/erikshus'}:
+            place = 'home'
+            requester_ip = request.access_route[0]
+            requester_geocode = geocoder.google('35.6921944, -80.4357413', key=GOOGLE_API_KEY)
+            latlng = requester_geocode.latlng
+            address = u'On Library Park: 35\N{DEGREE SIGN} 41\' 31.9\"N 80\N{DEGREE SIGN} 26\' 8.67\"W'
+        if str(request.path) == '/eriksgammelhus':
             place = 'home'
             requester_ip = request.access_route[0]
             requester_geocode = geocoder.google('42.106485, -76.262458', key=GOOGLE_API_KEY)
@@ -232,6 +242,7 @@ def print_ephemeris():
                                                          key=GOOGLE_API_KEY,
                                                          session=session).timeZoneId
 
+    # noinspection PyPep8
     return render_template('print_times.html',
                        place=place,
                        sunset_string=twilight('sunset', place, requester_geocode),
@@ -252,6 +263,7 @@ def print_ephemeris():
                        latlng=latlng,
                        elevation=requester_geocode.elevation.meters,
                        ip=requester_ip)
+
 
 if __name__ == '__main__':
     application.run()
