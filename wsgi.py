@@ -234,9 +234,9 @@ def print_ephemeris():
                 address = str(requester_geocode.address)  # save the address first,
             else:
                 place = 'home'
-                requester_geocode = geocoder.google('42.106485, -76.262458', key=GOOGLE_API_KEY)
+                requester_geocode = geocoder.google('35.6921944, -80.4357413', key=GOOGLE_API_KEY)
                 latlng = requester_geocode.latlng
-                address = u'Under the streetlamp: 42\N{DEGREE SIGN} 06\' 23.4\"N 76\N{DEGREE SIGN} 15\' 44.9\"W'
+                address = u'On Library Park: 35\N{DEGREE SIGN} 41\' 31.9\"N 80\N{DEGREE SIGN} 26\' 8.67\"W'
 
         requester_geocode.elevation = geocoder.elevation(latlng,
                                                          key=GOOGLE_API_KEY,
