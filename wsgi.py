@@ -103,7 +103,7 @@ def twilight(which_one, place='erikshus', requester_geocode=None):
     elev = requester_geocode.elevation.meters
     zone = requester_geocode.timeZoneId
     # Setup for the observer (default location is above).
-    if place == 'home' or place == 'erikshus':
+    if place in {'home', 'erikshus'}:
         lat, lng, elev = '35.6921944', '-80.4357413', 214
     elif place == 'gammelhus':
         # erikshus, specifically, the telescope pier in my front yard.
@@ -142,9 +142,11 @@ def twilight(which_one, place='erikshus', requester_geocode=None):
     if which_one in ones:
         for template in templates:
             if which_one == ("{}_end".format(template[1])):
+                # noinspection PyUnresolvedReferences
                 sun = ephem.Sun(obs)
                 return object_ephemeris(sun, obs, dt, zone, 'set', template[0])['printable']
             if which_one == ("{}_begin".format(template[1])):
+                # noinspection PyUnresolvedReferences
                 sun = ephem.Sun(obs)
                 return object_ephemeris(sun, obs, dt, zone, 'rise', template[0])['printable']
 
