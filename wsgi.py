@@ -99,11 +99,11 @@ def lunar_phase(dt, zone):
     return description[int(index) & 7]
 
 
-def twilight(which_one, place='erikshus', requester_geocode=None):
+def twilight(which_one, place='nc', requester_geocode=None):
     elev = requester_geocode.elevation.meters
     zone = requester_geocode.timeZoneId
     # Setup for the observer (default location is above).
-    if place in {'nc', 'home', 'erikshus'}:
+    if place == 'nc':
         lat, lng, elev = '35.6921944', '-80.4357413', 214
     elif place == 'gammelhus':
         # erikshus, specifically, the telescope pier in my front yard.
@@ -188,8 +188,6 @@ def page_not_found(error):
 # noinspection PyUnusedLocal
 @application.route('/')
 @application.route('/nc')
-@application.route('/home')
-@application.route('/erikshus')
 @application.route('/gammelhus')
 @application.route('/stjohns')
 @application.route('/kopernik')
@@ -197,7 +195,7 @@ def page_not_found(error):
 def print_ephemeris():
     # set the location to report for
     with requests.Session() as session:
-        if str(request.path) in {'/nc', '/home', '/erikshus'}:
+        if str(request.path) == '/nc':
             place = 'nc'
             requester_ip = request.access_route[0]
             requester_geocode = geocoder.google('35.6921944, -80.4357413', key=GOOGLE_API_KEY)
