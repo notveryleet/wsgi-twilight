@@ -104,7 +104,7 @@ def twilight(which_one, place='nc', requester_geocode=None):
     zone = requester_geocode.timeZoneId
     # Setup for the observer (default location is above).
     if place == 'nc':
-        lat, lng, elev = '35.6921944', '-80.4357413', 214
+        lat, lng, elev = '35.692194', '-80.435741', 214
     elif place == 'gammelhus':
         # erikshus, specifically, the telescope pier in my front yard.
         lat, lng, elev = '42.106485', '-76.262458', 248.7168
@@ -195,11 +195,10 @@ def page_not_found(error):
 def print_ephemeris():
     # set the location to report for
     with requests.Session() as session:
-        print(request.path)
         if str(request.path) == '/nc':
             place = 'nc'
             requester_ip = request.access_route[0]
-            requester_geocode = geocoder.google('35.6921944, -80.4357413', key=GOOGLE_API_KEY)
+            requester_geocode = geocoder.google('35.692194, -80.435741', key=GOOGLE_API_KEY)
             latlng = requester_geocode.latlng
             address = u'On Library Park: 35\N{DEGREE SIGN} 41\' 31.9\"N 80\N{DEGREE SIGN} 26\' 8.67\"W'
         if str(request.path) == '/gammelhus':
@@ -236,7 +235,7 @@ def print_ephemeris():
                 address = str(requester_geocode.address)  # save the address first,
             else:
                 place = 'nc'
-                requester_geocode = geocoder.google('35.6921944, -80.4357413', key=GOOGLE_API_KEY)
+                requester_geocode = geocoder.google('35.692194, -80.435741', key=GOOGLE_API_KEY)
                 latlng = requester_geocode.latlng
                 address = u'On Library Park: 35\N{DEGREE SIGN} 41\' 31.9\"N 80\N{DEGREE SIGN} 26\' 8.67\"W'
 
