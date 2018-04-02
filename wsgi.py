@@ -195,6 +195,7 @@ def page_not_found(error):
 def print_ephemeris():
     # set the location to report for
     with requests.Session() as session:
+        print(request.path)
         if str(request.path) == '/nc':
             place = 'nc'
             requester_ip = request.access_route[0]
