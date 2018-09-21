@@ -103,8 +103,8 @@ def twilight(which_one, place='nc', requester_geocode=None):
     elev = requester_geocode.elevation.meters
     zone = requester_geocode.timeZoneId
     # Setup for the observer (default location is above).
-    if place == 'nc':
-        lat, lng, elev = '35.692194', '-80.435741', 214
+    if place == 'nc' or place == 'erikshus':
+        lat, lng, elev = '35.692194', '-80.435741', 218.2
     elif place == 'gammelhus':
         # erikshus, specifically, the telescope pier in my front yard.
         lat, lng, elev = '42.106485', '-76.262458', 248.7168
@@ -224,7 +224,7 @@ def print_ephemeris():
             requester_geocode = geocoder.google('35.692194, -80.435741', key=GOOGLE_API_KEY)
             latlng = requester_geocode.latlng
             address = u'On Library Park: 35\N{DEGREE SIGN} 41\' 31.9\"N 80\N{DEGREE SIGN} 26\' 8.67\"W'
-        if str(request.path) == '/gammelhus':
+        elif str(request.path) == '/gammelhus':
             place = 'gammelhus'
             requester_ip = request.access_route[0]
             requester_geocode = geocoder.google('42.106485, -76.262458', key=GOOGLE_API_KEY)
@@ -257,7 +257,7 @@ def print_ephemeris():
                 latlng = requester_geocode.latlng
                 address = str(requester_geocode.address)  # save the address first,
             else:
-                place = 'nc'
+                place = 'erikshus'
                 requester_geocode = geocoder.google('35.692194, -80.435741', key=GOOGLE_API_KEY)
                 latlng = requester_geocode.latlng
                 address = u'On Library Park: 35\N{DEGREE SIGN} 41\' 31.9\"N 80\N{DEGREE SIGN} 26\' 8.67\"W'
@@ -271,28 +271,28 @@ def print_ephemeris():
 
     # noinspection PyPep8
     return render_template('print_times.html',
-                       place=place,
-                       sunset_string=twilight('sunset', place, requester_geocode),
-                       sunrise_string=twilight('sunrise', place, requester_geocode),
-                       civil_end_string=twilight('civil_end', place, requester_geocode),
-                       civil_begin_string=twilight('civil_begin', place, requester_geocode),
-                       nautical_end_string=twilight('nautical_end', place, requester_geocode),
-                       nautical_begin_string=twilight('nautical_begin', place, requester_geocode),
-                       amateur_end_string=twilight('amateur_end', place, requester_geocode),
-                       amateur_begin_string=twilight('amateur_begin', place, requester_geocode),
-                       astro_end_string=twilight('astronomical_end', place, requester_geocode),
-                       astro_begin_string=twilight('astronomical_begin', place, requester_geocode),
-                       moonrise_string=twilight('moonrise', place, requester_geocode),
-                       moonset_string=twilight('moonset', place, requester_geocode),
-                       moon_phase_string=twilight('moon_phase', place, requester_geocode),
-                       moonset_ante_astro_noon_p=twilight('moonset_ante_astro_noon_p', place, requester_geocode),
-                       address=address,
-                       latlng=latlng,
-                       elevation=requester_geocode.elevation.meters,
-                       ip=requester_ip)
+                           place=place,
+                           sunset_string=twilight('sunset', place, requester_geocode),
+                           sunrise_string=twilight('sunrise', place, requester_geocode),
+                           civil_end_string=twilight('civil_end', place, requester_geocode),
+                           civil_begin_string=twilight('civil_begin', place, requester_geocode),
+                           nautical_end_string=twilight('nautical_end', place, requester_geocode),
+                           nautical_begin_string=twilight('nautical_begin', place, requester_geocode),
+                           amateur_end_string=twilight('amateur_end', place, requester_geocode),
+                           amateur_begin_string=twilight('amateur_begin', place, requester_geocode),
+                           astro_end_string=twilight('astronomical_end', place, requester_geocode),
+                           astro_begin_string=twilight('astronomical_begin', place, requester_geocode),
+                           moonrise_string=twilight('moonrise', place, requester_geocode),
+                           moonset_string=twilight('moonset', place, requester_geocode),
+                           moon_phase_string=twilight('moon_phase', place, requester_geocode),
+                           moonset_ante_astro_noon_p=twilight('moonset_ante_astro_noon_p', place, requester_geocode),
+                           address=address,
+                           latlng=latlng,
+                           elevation=requester_geocode.elevation.meters,
+                           ip=requester_ip)
 
 
 if __name__ == '__main__':
     application.run()
 
-# eof #
+# xyzzy #
