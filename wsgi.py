@@ -182,12 +182,35 @@ application = Flask(__name__)
 # noinspection PyUnusedLocal
 @application.errorhandler(404)
 def page_not_found(error):
-    return render_template('404.html'), 404
+    with requests.Session() as session:
+        requester_ip = request.access_route[0]
+
+        if requester_ip != '127.0.0.1':
+            place = 'geocode'
+            requester_geocode = geocoder.ip(requester_ip, key=GOOGLE_API_KEY)
+            latlng = requester_geocode.latlng
+            address = str(requester_geocode.address)  # save the address first,
+        else:
+            place = 'erikshus'
+            requester_geocode = geocoder.google('35.692194, -80.435741', key=GOOGLE_API_KEY)
+            latlng = requester_geocode.latlng
+            address = u'On Library Park: 35\N{DEGREE SIGN} 41\' 31.9\"N 80\N{DEGREE SIGN} 26\' 8.67\"W'
+
+    requester_geocode.elevation = geocoder.elevation(latlng,
+                                                     key=GOOGLE_API_KEY,
+                                                     session=session)  # get an elevation for it.
+    return render_template('404.html',
+                           place=place,
+                           address=address,
+                           latlng=latlng,
+                           elevation=requester_geocode.elevation.meters,
+                           ip=requester_ip), 404
 
 
 # noinspection PyUnusedLocal
 @application.route('/')
 @application.route('/nc')
+@application.route('/erikshus')
 @application.route('/gammelhus')
 @application.route('/stjohns')
 @application.route('/kopernik')
@@ -195,7 +218,7 @@ def page_not_found(error):
 def print_ephemeris():
     # set the location to report for
     with requests.Session() as session:
-        if str(request.path) == '/nc':
+        if str(request.path) == '/nc' or str(request.path) == '/erikshus':
             place = 'nc'
             requester_ip = request.access_route[0]
             requester_geocode = geocoder.google('35.692194, -80.435741', key=GOOGLE_API_KEY)
