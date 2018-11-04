@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
 import decimal
 import math
 from datetime import datetime, timedelta
@@ -21,7 +22,8 @@ RISE_SET_ANGLE, CIVIL_ANGLE, NAUTICAL_ANGLE, AMATEUR_ANGLE, ASTRONOMICAL_ANGLE =
 A_DAY, AN_HOUR, TWELVE_HOURS = timedelta(days=1), timedelta(hours=1), timedelta(hours=12)
 
 # Google API key
-GOOGLE_API_KEY = 'AIzaSyDHhHgOtNxf7Wa5cOY7Mt2ZU8IaqVTuaLo'
+os.environ['GOOGLE_API_KEY'] = 'AIzaSyAEZTiiZaWvCzOtJ6AKmSx_K949HKAzSMM'
+GOOGLE_API_KEY = os.environ['GOOGLE_API_KEY']
 
 
 def start_of_astronomical_day(dt):
@@ -185,20 +187,17 @@ def page_not_found(error):
     with requests.Session() as session:
         requester_ip = request.access_route[0]
 
-        if requester_ip != '127.0.0.1':
-            place = 'geocode'
-            requester_geocode = geocoder.ip(requester_ip, key=GOOGLE_API_KEY)
-            latlng = requester_geocode.latlng
-            address = str(requester_geocode.address)  # save the address first,
-        else:
-            place = 'erikshus'
-            requester_geocode = geocoder.google('35.692194, -80.435741', key=GOOGLE_API_KEY)
-            latlng = requester_geocode.latlng
+        if requester_ip == '127.0.0.1':
+            place, latlng = 'nc', [35.6921, -80.4357]
             address = u'On Library Park: 35\N{DEGREE SIGN} 41\' 31.9\"N 80\N{DEGREE SIGN} 26\' 8.67\"W'
 
-    requester_geocode.elevation = geocoder.elevation(latlng,
-                                                     key=GOOGLE_API_KEY,
-                                                     session=session)  # get an elevation for it.
+        else:
+            place, latlng = 'geocode', geocoder.ip(ip, key=GOOGLE_API_KEY).latlng
+            address = str(requester_geocode.address)  # save the address first,
+
+        requester_geocode = geocoder.google(latlng, key=GOOGLE_API_KEY, method='reverse', session=session)
+        requester_geocode.elevation = geocoder.elevation(latlng, key=GOOGLE_API_KEY, session=session)
+
     return render_template('404.html',
                            place=place,
                            address=address,
@@ -218,56 +217,42 @@ def page_not_found(error):
 def print_ephemeris():
     # set the location to report for
     with requests.Session() as session:
+        requester_ip = request.access_route[0]
+
         if str(request.path) == '/nc' or str(request.path) == '/erikshus':
-            place = 'nc'
-            requester_ip = request.access_route[0]
-            requester_geocode = geocoder.google('35.692194, -80.435741', key=GOOGLE_API_KEY)
-            latlng = requester_geocode.latlng
+            place, latlng = 'nc', [35.6921, -80.4357]
             address = u'On Library Park: 35\N{DEGREE SIGN} 41\' 31.9\"N 80\N{DEGREE SIGN} 26\' 8.67\"W'
         elif str(request.path) == '/gammelhus':
-            place = 'gammelhus'
-            requester_ip = request.access_route[0]
-            requester_geocode = geocoder.google('42.106485, -76.262458', key=GOOGLE_API_KEY)
-            latlng = requester_geocode.latlng
+            place, latlng = 'gammelhus', [42.1064, -76.2624]
             address = u'Under the streetlamp: 42\N{DEGREE SIGN} 06\' 23.4\"N 76\N{DEGREE SIGN} 15\' 44.9\"W'
         elif str(request.path) == '/stjohns':
-            place = 'stjohns'
-            requester_ip = request.access_route[0]
-            requester_geocode = geocoder.google('47.5675, -52.7072', key=GOOGLE_API_KEY)
-            latlng = requester_geocode.latlng
+            place, latlng = 'stjohns', [47.5675, -52.7072]
             address = u'St. John\'s: 47.5675\N{DEGREE SIGN}N 52.7072\N{DEGREE SIGN}W'
         elif str(request.path) == '/kopernik':
-            place = 'kopernik'
-            requester_ip = request.access_route[0]
-            requester_geocode = geocoder.google('42.001994, -76.033467', key=GOOGLE_API_KEY)
-            latlng = requester_geocode.latlng
+            place, latlng = 'kopernik', [42.0020, -76.0334]
             address = u'Kopernik Observatory: 42\N{DEGREE SIGN} 0\' 7.18\"N 76\N{DEGREE SIGN} 2\' 0.48\"W'
         elif str(request.path) == '/greenwich':
-            place = 'greenwich'
-            requester_ip = request.access_route[0]
-            requester_geocode = geocoder.google('51.476853, -0.0005002', key=GOOGLE_API_KEY)
-            latlng = requester_geocode.latlng
+            place, latlng = 'greenwich', [51.4768, -0.0005]
             address = u'Greenwich Observatory: 51\N{DEGREE SIGN} 28\' 38\"N 0\N{DEGREE SIGN} 0\' 0\"'
         else:
-            requester_ip = request.access_route[0]
-
-            if requester_ip != '127.0.0.1':
-                place = 'geocode'
-                requester_geocode = geocoder.ip(requester_ip, key=GOOGLE_API_KEY)
-                latlng = requester_geocode.latlng
-                address = str(requester_geocode.address)  # save the address first,
-            else:
-                place = 'erikshus'
-                requester_geocode = geocoder.google('35.692194, -80.435741', key=GOOGLE_API_KEY)
-                latlng = requester_geocode.latlng
+            if requester_ip == '127.0.0.1':
+                place, latlng = 'nc', [35.6921, -80.4357]
                 address = u'On Library Park: 35\N{DEGREE SIGN} 41\' 31.9\"N 80\N{DEGREE SIGN} 26\' 8.67\"W'
+            else:
+                place, latlng = 'geocode', geocoder.ip(requester_ip, key=GOOGLE_API_KEY, session=session).latlng
 
-        requester_geocode.elevation = geocoder.elevation(latlng,
-                                                         key=GOOGLE_API_KEY,
-                                                         session=session)  # get an elevation for it.
-        requester_geocode.timeZoneId = geocoder.timezone(latlng,
-                                                         key=GOOGLE_API_KEY,
-                                                         session=session).timeZoneId
+        requester_geocode = geocoder.google(latlng, method='reverse', key=GOOGLE_API_KEY, session=session)
+
+        # Use the defined address, which implies we are using a static location, if undefined make it the geocoded one.
+        try:
+            address
+        except NameError:
+            address = str(requester_geocode.address)
+
+        # Get the elevation
+        requester_geocode.elevation = geocoder.elevation(latlng, key=GOOGLE_API_KEY, session=session)
+        # Get the timezone
+        requester_geocode.timeZoneId = geocoder.timezone(latlng, key=GOOGLE_API_KEY, session=session).timeZoneId
 
     # noinspection PyPep8
     return render_template('print_times.html',
