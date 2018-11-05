@@ -99,25 +99,13 @@ def lunar_phase(dt, zone):
     return description[int(index) & 7]
 
 
-def twilight(which_one, place='nc', requester_geocode=None):
-    elev = requester_geocode.elevation.meters
-    zone = requester_geocode.timeZoneId
-    # Setup for the observer (default location is above).
-    if place == 'nc' or place == 'erikshus':
-        lat, lng, elev = '35.6922', '-80.4357', 218.2
-    elif place == 'gammelhus':
-        # erikshus, specifically, the telescope pier in my front yard.
-        lat, lng, elev = '42.1065', '-76.2625', 248.7168
-    elif place == 'kopernik':
-        lat, lng, elev = '42.0020', '-76.0334', 528
-    elif place == 'stjohns':
-        lat, lng, elev = '47.5675', '-52.7072', 83  # test St. John's for another timezone
-    elif place == 'greenwich':
-        lat, lng, elev = '51.4769', '-0.0005', 47.1526
-    elif place == 'geocode' and requester_geocode is not None:
-        lat, lng = str(requester_geocode.lat), str(requester_geocode.lng)
-    else:  # Greenwich
-        lat, lng, elev = '51.4769', '-0.0005', 47.1526
+def twilight(which_one, requester_geocode=None):
+    try:
+        lat, lng  = str(requester_geocode.lat), str(requester_geocode.lng),
+        elev = requester_geocode.elevation.meters
+        zone = requester_geocode.timeZoneId
+    except NameError:
+        lat, lng, elev, zone  = '51.4769', '-0.0005', 47.1526, 'GMT'
 
     obs = ephem.Observer()
     obs.lat, obs.long, latlng, obs.elev = lat, lng, "{}, {}".format(lat, lng), elev
@@ -224,8 +212,9 @@ def page_not_found(error):
 @application.route('/nc')
 @application.route('/erikshus')
 @application.route('/gammelhus')
-@application.route('/stjohns')
 @application.route('/kopernik')
+@application.route('/deetop')
+@application.route('/stjohns')
 @application.route('/greenwich')
 def print_ephemeris():
     # set the location to report for
@@ -241,6 +230,9 @@ def print_ephemeris():
         elif str(request.path) == '/kopernik':
             place, latlng, elev = 'kopernik', [42.0020, -76.0334], 528
             address: str = u'Kopernik Observatory: 42\N{DEGREE SIGN} 0\' 7\"N 76\N{DEGREE SIGN} 2\' 0\"W'
+        elif str(request.path) == '/deetop':
+            place, latlng, elev = 'deetop', [41.9700, -75.6700], 284
+            address: str = u'Dee-Top Observatory: 41\N{DEGREE SIGN} 58\' 12\"N 75\N{DEGREE SIGN} 40\' 12\"W'
         elif str(request.path) == '/stjohns':
             place, latlng, elev = 'stjohns', [47.5675, -52.7072], 83
             address: str = u'St. John\'s: 47\N{DEGREE SIGN} 34\' 3\"N 52\N{DEGREE SIGN} 42\' 26\"W'
@@ -277,20 +269,20 @@ def print_ephemeris():
     # noinspection PyPep8
     return render_template('print_times.html',
                            place=place,
-                           sunset_string=twilight('sunset', place, requester_geocode),
-                           sunrise_string=twilight('sunrise', place, requester_geocode),
-                           civil_end_string=twilight('civil_end', place, requester_geocode),
-                           civil_begin_string=twilight('civil_begin', place, requester_geocode),
-                           nautical_end_string=twilight('nautical_end', place, requester_geocode),
-                           nautical_begin_string=twilight('nautical_begin', place, requester_geocode),
-                           amateur_end_string=twilight('amateur_end', place, requester_geocode),
-                           amateur_begin_string=twilight('amateur_begin', place, requester_geocode),
-                           astro_end_string=twilight('astronomical_end', place, requester_geocode),
-                           astro_begin_string=twilight('astronomical_begin', place, requester_geocode),
-                           moonrise_string=twilight('moonrise', place, requester_geocode),
-                           moonset_string=twilight('moonset', place, requester_geocode),
-                           moon_phase_string=twilight('moon_phase', place, requester_geocode),
-                           moonset_ante_astro_noon_p=twilight('moonset_ante_astro_noon_p', place, requester_geocode),
+                           sunset_string=twilight('sunset', requester_geocode),
+                           sunrise_string=twilight('sunrise', requester_geocode),
+                           civil_end_string=twilight('civil_end', requester_geocode),
+                           civil_begin_string=twilight('civil_begin', requester_geocode),
+                           nautical_end_string=twilight('nautical_end', requester_geocode),
+                           nautical_begin_string=twilight('nautical_begin', requester_geocode),
+                           amateur_end_string=twilight('amateur_end', requester_geocode),
+                           amateur_begin_string=twilight('amateur_begin', requester_geocode),
+                           astro_end_string=twilight('astronomical_end', requester_geocode),
+                           astro_begin_string=twilight('astronomical_begin', requester_geocode),
+                           moonrise_string=twilight('moonrise', requester_geocode),
+                           moonset_string=twilight('moonset', requester_geocode),
+                           moon_phase_string=twilight('moon_phase', requester_geocode),
+                           moonset_ante_astro_noon_p=twilight('moonset_ante_astro_noon_p', requester_geocode),
                            address=address,
                            latlng=latlng,
                            elevation=requester_geocode.elevation.meters,
