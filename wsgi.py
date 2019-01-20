@@ -12,6 +12,7 @@ import requests
 from flask import Flask
 from flask import render_template
 from flask import request
+from flask import url_for
 from pytz import timezone
 
 # ephemeris elevations
@@ -101,11 +102,11 @@ def lunar_phase(dt, zone):
 
 def twilight(which_one, requester_geocode=None):
     try:
-        lat, lng  = str(requester_geocode.lat), str(requester_geocode.lng),
+        lat, lng = str(requester_geocode.lat), str(requester_geocode.lng),
         elev = requester_geocode.elevation.meters
         zone = requester_geocode.timeZoneId
     except NameError:
-        lat, lng, elev, zone  = '51.4769', '-0.0005', 47.1526, 'GMT'
+        lat, lng, elev, zone = '51.4769', '-0.0005', 47.1526, 'GMT'
 
     obs = ephem.Observer()
     obs.lat, obs.long, latlng, obs.elev = lat, lng, "{}, {}".format(lat, lng), elev
@@ -164,11 +165,12 @@ def twilight(which_one, requester_geocode=None):
             return 'False'
 
 
-application = Flask(__name__)
+app = Flask(__name__)
+app.add_url_rule('/favicon.ico', redirect_to=url_for('static', filename='favicon.ico'))
 
 
 # noinspection PyUnusedLocal
-@application.errorhandler(404)
+@app.errorhandler(404)
 def page_not_found(error):
     with requests.Session() as session:
         requester_ip = request.access_route[0]
@@ -208,14 +210,14 @@ def page_not_found(error):
 
 
 # noinspection PyUnusedLocal
-@application.route('/')
-@application.route('/nc')
-@application.route('/erikshus')
-@application.route('/gammelhus')
-@application.route('/kopernik')
-@application.route('/deetop')
-@application.route('/stjohns')
-@application.route('/greenwich')
+@app.route('/')
+@app.route('/nc')
+@app.route('/erikshus')
+@app.route('/gammelhus')
+@app.route('/kopernik')
+@app.route('/deetop')
+@app.route('/stjohns')
+@app.route('/greenwich')
 def print_ephemeris():
     # set the location to report for
     with requests.Session() as session:
@@ -290,6 +292,6 @@ def print_ephemeris():
 
 
 if __name__ == '__main__':
-    application.run()
+    app.run()
 
 # xyzzy #
