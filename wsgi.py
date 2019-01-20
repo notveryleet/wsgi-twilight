@@ -165,11 +165,11 @@ def twilight(which_one, requester_geocode=None):
             return 'False'
 
 
-app = Flask(__name__)
+application = Flask(__name__)
 
 
 # noinspection PyUnusedLocal
-@app.errorhandler(404)
+@application.errorhandler(404)
 def page_not_found(error):
     with requests.Session() as session:
         requester_ip = request.access_route[0]
@@ -209,14 +209,14 @@ def page_not_found(error):
 
 
 # noinspection PyUnusedLocal
-@app.route('/')
-@app.route('/nc')
-@app.route('/erikshus')
-@app.route('/gammelhus')
-@app.route('/kopernik')
-@app.route('/deetop')
-@app.route('/stjohns')
-@app.route('/greenwich')
+@application.route('/')
+@application.route('/nc')
+@application.route('/erikshus')
+@application.route('/gammelhus')
+@application.route('/kopernik')
+@application.route('/deetop')
+@application.route('/stjohns')
+@application.route('/greenwich')
 def print_ephemeris():
     # set the location to report for
     with requests.Session() as session:
@@ -291,6 +291,6 @@ def print_ephemeris():
 
 
 if __name__ == '__main__':
-    app.run()
+    application.run()
 
 # xyzzy #
