@@ -166,7 +166,6 @@ def twilight(which_one, requester_geocode=None):
 
 
 app = Flask(__name__)
-app.add_url_rule('/favicon.ico', redirect_to=url_for('static', filename='favicon.ico'))
 
 
 # noinspection PyUnusedLocal
