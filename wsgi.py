@@ -155,7 +155,8 @@ def _resolve_location(path: str, requester_ip: str, session):
         address = str(rev_geo.address)
 
     if elev is None:
-        elev = geocoder.elevation(latlng, key=GOOGLE_API_KEY, session=session).meters
+        elev_result = geocoder.elevation(latlng, key=GOOGLE_API_KEY, session=session).meters
+        elev = float(elev_result) if elev_result is not None else 0.0
 
     tz = geocoder.timezone(latlng, key=GOOGLE_API_KEY, session=session)
     zone = tz.timeZoneId if tz and tz.timeZoneId else 'UTC'
