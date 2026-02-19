@@ -147,7 +147,8 @@ def _resolve_location(path: str, requester_ip: str, session):
         place, latlng, elev, address = _DEFAULT_LOCATION
     else:
         ip_geo = geocoder.ip(requester_ip, key=GOOGLE_API_KEY, session=session)
-        place, latlng, elev, address = 'geocode', ip_geo.latlng, None, None
+        latlng = ip_geo.latlng if ip_geo.latlng else _DEFAULT_LOCATION[1]
+        place, elev, address = 'geocode', None, None
 
     if address is None:
         rev_geo = geocoder.google(latlng, method='reverse', key=GOOGLE_API_KEY, session=session)
@@ -156,7 +157,8 @@ def _resolve_location(path: str, requester_ip: str, session):
     if elev is None:
         elev = geocoder.elevation(latlng, key=GOOGLE_API_KEY, session=session).meters
 
-    zone = geocoder.timezone(latlng, key=GOOGLE_API_KEY, session=session).timeZoneId
+    tz = geocoder.timezone(latlng, key=GOOGLE_API_KEY, session=session)
+    zone = tz.timeZoneId if tz and tz.timeZoneId else 'UTC'
 
     return place, latlng, elev, address, zone
 

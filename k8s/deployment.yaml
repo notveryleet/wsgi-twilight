@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: twilight
-          image: twilight:latest
+          image: twilight:v2
           imagePullPolicy: Never
           ports:
             - containerPort: 8000
@@ -34,12 +34,14 @@ spec:
               memory: "256Mi"
               cpu: "500m"
           readinessProbe:
-            tcpSocket:
+            httpGet:
+              path: /nc
               port: 8000
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
-            tcpSocket:
+            httpGet:
+              path: /nc
               port: 8000
             initialDelaySeconds: 15
             periodSeconds: 30
