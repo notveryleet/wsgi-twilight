@@ -12,6 +12,9 @@ import geocoder
 import requests
 from flask import Flask, render_template, request
 from pytz import timezone
+from timezonefinder import TimezoneFinder
+
+_tf = TimezoneFinder()
 
 # Ephemeris horizon angles
 RISE_SET_ANGLE = '-0:34'
@@ -158,8 +161,7 @@ def _resolve_location(path: str, requester_ip: str, session):
         elev_result = geocoder.elevation(latlng, key=GOOGLE_API_KEY, session=session).meters
         elev = float(elev_result) if elev_result is not None else 0.0
 
-    tz = geocoder.timezone(latlng, key=GOOGLE_API_KEY, session=session)
-    zone = tz.timeZoneId if tz and tz.timeZoneId else 'UTC'
+    zone = _tf.timezone_at(lat=latlng[0], lng=latlng[1]) or 'UTC'
 
     return place, latlng, elev, address, zone
 

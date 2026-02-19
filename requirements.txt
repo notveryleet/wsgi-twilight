@@ -7,3 +7,4 @@ ephem
 git+https://github.com/lambda-conspiracy/geocoder.git@master#egg=geocoder
 arrow
 pytz
+timezonefinder
