@@ -1,10 +1,9 @@
-mod_wsgi
+gunicorn
 requests
 Flask
 MarkupSafe
 python-dateutil
-DateTime
 ephem
-git+git://github.com/lambda-conspiracy/geocoder.git@master#egg=geocoder
+git+https://github.com/lambda-conspiracy/geocoder.git@master#egg=geocoder
 arrow
 pytz

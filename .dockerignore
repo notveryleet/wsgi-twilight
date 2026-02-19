@@ -1,0 +1,6 @@
+.git
+.idea
+*.iml
+__pycache__
+*.pyc
+k8s/

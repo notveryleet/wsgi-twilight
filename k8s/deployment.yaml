@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: twilight
+  labels:
+    app: twilight
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: twilight
+  template:
+    metadata:
+      labels:
+        app: twilight
+    spec:
+      containers:
+        - name: twilight
+          image: twilight:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: GOOGLE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: twilight-secrets
+                  key: GOOGLE_API_KEY
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /nc
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /nc
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 30
