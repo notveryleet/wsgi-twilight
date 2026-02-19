@@ -1,1 +1,3 @@
 .idea/
+k8s/secret.yaml
+.venv/
