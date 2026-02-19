@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: twilight
-          image: twilight:v2
+          image: twilight:latest
           imagePullPolicy: Never
           ports:
             - containerPort: 8000
