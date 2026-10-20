@@ -8,9 +8,10 @@ from datetime import datetime, timedelta
 
 import arrow
 import ephem
-import geocoder
 import requests
 from flask import Flask, render_template, request
+from geopy.exc import GeopyError
+from geopy.geocoders import GoogleV3
 from pytz import timezone
 from timezonefinder import TimezoneFinder
 
@@ -28,6 +29,10 @@ A_DAY = timedelta(days=1)
 AN_HOUR = timedelta(hours=1)
 
 GOOGLE_API_KEY: str = os.environ.get('GOOGLE_API_KEY', '')
+
+IPINFO_URL = 'https://ipinfo.io/{0}/json'
+ELEVATION_URL = 'https://maps.googleapis.com/maps/api/elevation/json'
+HTTP_TIMEOUT = 5
 
 # Predefined locations: path -> (place_id, [lat, lng], elev_m, address)
 NAMED_LOCATIONS = {
@@ -135,6 +140,40 @@ def twilight(which_one: str, lat: str, lng: str, elev: float, zone: str) -> str:
     return ''
 
 
+def _ip_latlng(ip: str, session):
+    """Look up approximate [lat, lng] for an IP address via ipinfo.io, or None."""
+    try:
+        resp = session.get(IPINFO_URL.format(ip), timeout=HTTP_TIMEOUT)
+        resp.raise_for_status()
+        lat, lng = resp.json()['loc'].split(',')
+        return [float(lat), float(lng)]
+    except (requests.RequestException, ValueError, KeyError):
+        return None
+
+
+def _reverse_geocode(latlng) -> str:
+    """Return a formatted address for the coordinates via Google, or the coordinates themselves."""
+    try:
+        location = GoogleV3(api_key=GOOGLE_API_KEY, timeout=HTTP_TIMEOUT).reverse(latlng, exactly_one=True)
+        if location:
+            return location.address
+    except GeopyError:
+        pass
+    return f'{latlng[0]}, {latlng[1]}'
+
+
+def _elevation(latlng, session) -> float:
+    """Return elevation in meters for the coordinates via Google, or 0.0."""
+    try:
+        resp = session.get(ELEVATION_URL,
+                           params={'locations': f'{latlng[0]},{latlng[1]}', 'key': GOOGLE_API_KEY},
+                           timeout=HTTP_TIMEOUT)
+        resp.raise_for_status()
+        return float(resp.json()['results'][0]['elevation'])
+    except (requests.RequestException, ValueError, KeyError, IndexError):
+        return 0.0
+
+
 def _resolve_location(path: str, requester_ip: str, session):
     """
     Resolve location data for a request.
@@ -149,17 +188,14 @@ def _resolve_location(path: str, requester_ip: str, session):
     elif requester_ip == '127.0.0.1':
         place, latlng, elev, address = _DEFAULT_LOCATION
     else:
-        ip_geo = geocoder.ip(requester_ip, key=GOOGLE_API_KEY, session=session)
-        latlng = ip_geo.latlng if ip_geo.latlng else _DEFAULT_LOCATION[1]
+        latlng = _ip_latlng(requester_ip, session) or _DEFAULT_LOCATION[1]
         place, elev, address = 'geocode', None, None
 
     if address is None:
-        rev_geo = geocoder.google(latlng, method='reverse', key=GOOGLE_API_KEY, session=session)
-        address = str(rev_geo.address)
+        address = _reverse_geocode(latlng)
 
     if elev is None:
-        elev_result = geocoder.elevation(latlng, key=GOOGLE_API_KEY, session=session).meters
-        elev = float(elev_result) if elev_result is not None else 0.0
+        elev = _elevation(latlng, session)
 
     zone = _tf.timezone_at(lat=latlng[0], lng=latlng[1]) or 'UTC'
 

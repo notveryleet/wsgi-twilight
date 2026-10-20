@@ -4,7 +4,7 @@ Flask
 MarkupSafe
 python-dateutil
 ephem
-git+https://github.com/lambda-conspiracy/geocoder.git@master#egg=geocoder
+geopy>=2.4,<3
 arrow
 pytz
 timezonefinder
