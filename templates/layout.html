@@ -18,6 +18,6 @@
     <a href="/kopernik">Kopernik</a>&emsp;&emsp;<a href="/deetop">Dee-Top</a>&emsp;&emsp;<a href="/stjohns">St. Johns</a>&emsp;&emsp;
     <a href="/greenwich">Greenwich</a><p></p>
     {% if ip != '' %}
-       Request from:&nbsp;IP:&nbsp;{{ ip }}&comma;&nbsp;[Lat, Long]:&nbsp;{{ latlng }}&comma;&nbsp;AMSL:&nbsp;{{ elevation }}&nbsp;m
+       Request from:&nbsp;IP:&nbsp;{{ ip }}&comma;&nbsp;Lat, Long:&nbsp;{{ latlng | dms }}&comma;&nbsp;AMSL:&nbsp;{{ '%.1f' | format(elevation) }}&nbsp;m
     {% endif %}
 </div>

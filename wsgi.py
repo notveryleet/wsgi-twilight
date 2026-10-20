@@ -45,7 +45,7 @@ NAMED_LOCATIONS = {
     '/kopernik':  ('kopernik',  [42.0020, -76.0334], 528.0,    u'Kopernik Observatory: 42\N{DEGREE SIGN} 0\' 7"N 76\N{DEGREE SIGN} 2\' 0"W'),
     '/deetop':    ('deetop',    [41.9700, -75.6700], 284.0,    u'Dee-Top Observatory: 41\N{DEGREE SIGN} 58\' 12"N 75\N{DEGREE SIGN} 40\' 12"W'),
     '/stjohns':   ('stjohns',   [47.5675, -52.7072], 83.0,     u'St. John\'s: 47\N{DEGREE SIGN} 34\' 3"N 52\N{DEGREE SIGN} 42\' 26"W'),
-    '/greenwich': ('greenwich', [51.4768, -0.0005],  47.1526,  u'Greenwich Observatory: 51\N{DEGREE SIGN} 28\' 38"N 0\N{DEGREE SIGN} 0\' 0"'),
+    '/greenwich': ('greenwich', [51.4772, 0.0],      47.1526,  u'Greenwich Observatory: 51\N{DEGREE SIGN} 28\' 38"N 0\N{DEGREE SIGN} 0\' 0"'),
 }
 
 _DEFAULT_LOCATION = ('nc', [35.6921, -80.4357], 218.2, u'On Library Park: 35\N{DEGREE SIGN} 41\' 32"N 80\N{DEGREE SIGN} 26\' 9"W')
@@ -160,15 +160,25 @@ def _ip_latlng(ip, session):
         return None
 
 
+def format_dms(latlng) -> str:
+    """Format [lat, lng] in degrees, minutes and seconds, e.g. 35° 41' 32"N 80° 26' 9"W."""
+    def dms(value, positive, negative):
+        total = round(abs(value) * 3600)
+        degrees, seconds = divmod(total, 3600)
+        minutes, seconds = divmod(seconds, 60)
+        return f'{degrees}\N{DEGREE SIGN} {minutes}\' {seconds}"{negative if value < 0 and total else positive}'
+    return f"{dms(latlng[0], 'N', 'S')} {dms(latlng[1], 'E', 'W')}"
+
+
 def _reverse_geocode(latlng) -> str:
-    """Return a formatted address for the coordinates via Google, or the coordinates themselves."""
+    """Return a formatted address for the coordinates via Google, or the coordinates in DMS."""
     try:
         location = GoogleV3(api_key=GOOGLE_API_KEY, timeout=HTTP_TIMEOUT).reverse(latlng, exactly_one=True)
         if location:
             return location.address
     except GeopyError:
         pass
-    return f'{latlng[0]}, {latlng[1]}'
+    return format_dms(latlng)
 
 
 def _elevation(latlng, session) -> float:
@@ -222,6 +232,7 @@ def _resolve_location(path: str, requester_ip: str, session):
 
 application = Flask(__name__)
 application.wsgi_app = ProxyFix(application.wsgi_app, x_for=TRUSTED_PROXY_HOPS)
+application.add_template_filter(format_dms, 'dms')
 
 
 def _render_ephemeris(place, latlng, elev, address, zone, requester_ip):
