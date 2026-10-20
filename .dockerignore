@@ -4,3 +4,5 @@
 __pycache__
 *.pyc
 k8s/
+.venv
+.DS_Store

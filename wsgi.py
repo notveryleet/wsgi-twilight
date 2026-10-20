@@ -4,15 +4,14 @@
 import decimal
 import math
 import os
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
+from zoneinfo import ZoneInfo
 
-import arrow
 import ephem
 import requests
 from flask import Flask, render_template, request
 from geopy.exc import GeopyError
 from geopy.geocoders import GoogleV3
-from pytz import timezone
 from timezonefinder import TimezoneFinder
 
 _tf = TimezoneFinder()
@@ -58,12 +57,11 @@ TWILIGHT_TYPES = [
 
 def start_of_astronomical_day(dt, zone):
     """Return the start of the astronomical day (local noon in zone) for the given datetime, in UTC."""
-    tz = timezone(zone)
-    local = dt.astimezone(tz)
-    noon = local.replace(hour=12, minute=0, second=0, microsecond=0, tzinfo=None)
+    local = dt.astimezone(ZoneInfo(zone))
+    noon = local.replace(hour=12, minute=0, second=0, microsecond=0)
     if local.hour < 12:
         noon -= A_DAY
-    return tz.localize(noon).astimezone(timezone('UTC'))
+    return noon.astimezone(UTC)
 
 
 def object_ephemeris(body, obs, dt, zone, kind, elev_angle=RISE_SET_ANGLE):
@@ -79,7 +77,7 @@ def object_ephemeris(body, obs, dt, zone, kind, elev_angle=RISE_SET_ANGLE):
             result = ephem.Date(obs.next_setting(body, use_center=use_center)).datetime()
         else:
             return {'printable': 'None', 'data': None}
-        result = result.replace(tzinfo=timezone('UTC')).astimezone(timezone(zone))
+        result = result.replace(tzinfo=UTC).astimezone(ZoneInfo(zone))
         return {'printable': result.strftime("%b %d %H:%M:%S %Z"), 'data': result}
     except ephem.CircumpolarError:
         return {'printable': 'N/A for this latitude', 'data': None}
@@ -92,7 +90,7 @@ def lunar_phase(dt, zone):
         "New Moon", "Waxing Crescent Moon", "First Quarter Moon", "Waxing Gibbous Moon",
         "Full Moon", "Waning Gibbous Moon", "Last Quarter Moon", "Waning Crescent Moon",
     ]
-    diff = dt - datetime(2001, 1, 1, tzinfo=timezone(zone))
+    diff = dt - datetime(2001, 1, 1, tzinfo=ZoneInfo(zone))
     days = dec(diff.days) + (dec(diff.seconds) / dec(86400))
     lunations = dec("0.20439731") + (days * dec("0.03386319269"))
     pos = lunations % dec(1)
@@ -104,7 +102,7 @@ def twilight(which_one: str, lat: str, lng: str, elev: float, zone: str) -> str:
     """Calculate a single twilight/ephemeris value for the given location."""
     obs = ephem.Observer()
     obs.lat, obs.long, obs.elev = lat, lng, elev
-    dt = start_of_astronomical_day(arrow.utcnow().datetime, zone)
+    dt = start_of_astronomical_day(datetime.now(UTC), zone)
 
     if which_one == 'sunset':
         return object_ephemeris(ephem.Sun(obs), obs, dt, zone, 'set')['printable']
@@ -136,7 +134,7 @@ def twilight(which_one: str, lat: str, lng: str, elev: float, zone: str) -> str:
 
     if which_one == 'moonset_ante_astro_noon_p':
         moonset = object_ephemeris(moon, obs, dt, zone, 'set')
-        if moonset['data'] and moonset['data'].day == dt.astimezone(timezone(zone)).day and 12 <= moonset['data'].hour <= 23:
+        if moonset['data'] and moonset['data'].day == dt.astimezone(ZoneInfo(zone)).day and 12 <= moonset['data'].hour <= 23:
             return 'True'
         return 'False'
 

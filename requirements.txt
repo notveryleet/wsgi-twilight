@@ -1,10 +1,7 @@
-gunicorn
-requests
-Flask
-MarkupSafe
-python-dateutil
-ephem
-geopy>=2.4,<3
-arrow
-pytz
-timezonefinder
+gunicorn==26.2.0
+Flask==3.1.3
+requests==2.34.2
+geopy==2.5.0
+ephem==4.2.1
+timezonefinder==9.0.0
+tzdata==2026.5
