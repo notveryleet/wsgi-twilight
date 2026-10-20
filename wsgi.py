@@ -56,11 +56,14 @@ TWILIGHT_TYPES = [
 ]
 
 
-def start_of_astronomical_day(dt):
-    """Return the start of the astronomical day (local noon) for the given UTC datetime."""
-    if 0 <= dt.hour < 12:
-        return dt.replace(hour=13, minute=15, second=0, microsecond=0) - A_DAY
-    return dt.replace(hour=13, minute=15, second=0, microsecond=0)
+def start_of_astronomical_day(dt, zone):
+    """Return the start of the astronomical day (local noon in zone) for the given datetime, in UTC."""
+    tz = timezone(zone)
+    local = dt.astimezone(tz)
+    noon = local.replace(hour=12, minute=0, second=0, microsecond=0, tzinfo=None)
+    if local.hour < 12:
+        noon -= A_DAY
+    return tz.localize(noon).astimezone(timezone('UTC'))
 
 
 def object_ephemeris(body, obs, dt, zone, kind, elev_angle=RISE_SET_ANGLE):
@@ -101,7 +104,7 @@ def twilight(which_one: str, lat: str, lng: str, elev: float, zone: str) -> str:
     """Calculate a single twilight/ephemeris value for the given location."""
     obs = ephem.Observer()
     obs.lat, obs.long, obs.elev = lat, lng, elev
-    dt = start_of_astronomical_day(arrow.utcnow().datetime)
+    dt = start_of_astronomical_day(arrow.utcnow().datetime, zone)
 
     if which_one == 'sunset':
         return object_ephemeris(ephem.Sun(obs), obs, dt, zone, 'set')['printable']
@@ -133,7 +136,7 @@ def twilight(which_one: str, lat: str, lng: str, elev: float, zone: str) -> str:
 
     if which_one == 'moonset_ante_astro_noon_p':
         moonset = object_ephemeris(moon, obs, dt, zone, 'set')
-        if moonset['data'] and moonset['data'].day == dt.day and 12 <= moonset['data'].hour <= 23:
+        if moonset['data'] and moonset['data'].day == dt.astimezone(timezone(zone)).day and 12 <= moonset['data'].hour <= 23:
             return 'True'
         return 'False'
 
