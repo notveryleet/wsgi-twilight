@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import decimal
+import ipaddress
 import math
 import os
 from datetime import UTC, datetime, timedelta
@@ -25,7 +25,7 @@ ASTRONOMICAL_ANGLE = '-18'
 
 # Time spans
 A_DAY = timedelta(days=1)
-AN_HOUR = timedelta(hours=1)
+HALF_A_DAY = timedelta(hours=12)
 
 GOOGLE_API_KEY: str = os.environ.get('GOOGLE_API_KEY', '')
 
@@ -55,17 +55,14 @@ TWILIGHT_TYPES = [
 ]
 
 
-def start_of_astronomical_day(dt, zone):
-    """Return the start of the astronomical day (local noon in zone) for the given datetime, in UTC."""
-    local = dt.astimezone(ZoneInfo(zone))
-    noon = local.replace(hour=12, minute=0, second=0, microsecond=0)
-    if local.hour < 12:
-        noon -= A_DAY
-    return noon.astimezone(UTC)
+def start_of_astronomical_day(obs, dt):
+    """Return the start of the astronomical day (the sun's last transit, i.e. local solar noon) before dt, in UTC."""
+    obs.date = dt
+    return ephem.Date(obs.previous_transit(ephem.Sun())).datetime().replace(tzinfo=UTC)
 
 
-def object_ephemeris(body, obs, dt, zone, kind, elev_angle=RISE_SET_ANGLE):
-    """Calculate the next rise or set time for a celestial body."""
+def object_ephemeris(body, obs, dt, zone, kind, elev_angle=RISE_SET_ANGLE, before=None):
+    """Calculate the next rise or set time for a celestial body, or N/A if it isn't before `before`."""
     obs.horizon = elev_angle
     obs.date = dt
     use_center = elev_angle != RISE_SET_ANGLE
@@ -77,44 +74,51 @@ def object_ephemeris(body, obs, dt, zone, kind, elev_angle=RISE_SET_ANGLE):
             result = ephem.Date(obs.next_setting(body, use_center=use_center)).datetime()
         else:
             return {'printable': 'None', 'data': None}
-        result = result.replace(tzinfo=UTC).astimezone(ZoneInfo(zone))
+        result = result.replace(tzinfo=UTC)
+        if before is not None and result >= before:
+            raise ephem.CircumpolarError
+        result = result.astimezone(ZoneInfo(zone))
         return {'printable': result.strftime("%b %d %H:%M:%S %Z"), 'data': result}
     except ephem.CircumpolarError:
         return {'printable': 'N/A for this latitude', 'data': None}
 
 
-def lunar_phase(dt, zone):
-    """Return a string description of the current lunar phase."""
-    dec = decimal.Decimal
+def lunar_phase(dt):
+    """Return a string description of the lunar phase at dt."""
     descriptions = [
         "New Moon", "Waxing Crescent Moon", "First Quarter Moon", "Waxing Gibbous Moon",
         "Full Moon", "Waning Gibbous Moon", "Last Quarter Moon", "Waning Crescent Moon",
     ]
-    diff = dt - datetime(2001, 1, 1, tzinfo=ZoneInfo(zone))
-    days = dec(diff.days) + (dec(diff.seconds) / dec(86400))
-    lunations = dec("0.20439731") + (days * dec("0.03386319269"))
-    pos = lunations % dec(1)
-    index = math.floor(pos * dec(8) + dec("0.5"))
-    return descriptions[int(index) & 7]
+    date = ephem.Date(dt)
+    last_new, next_new = ephem.previous_new_moon(date), ephem.next_new_moon(date)
+    index = math.floor((date - last_new) / (next_new - last_new) * 8 + 0.5)
+    return descriptions[index & 7]
 
 
 def twilight(which_one: str, lat: str, lng: str, elev: float, zone: str) -> str:
     """Calculate a single twilight/ephemeris value for the given location."""
     obs = ephem.Observer()
     obs.lat, obs.long, obs.elev = lat, lng, elev
-    dt = start_of_astronomical_day(datetime.now(UTC), zone)
+    obs.pressure = 0  # the horizon angles already include refraction (USNO convention)
+    dt = start_of_astronomical_day(obs, datetime.now(UTC))
+
+    # The sun sets before solar midnight and rises before the next solar noon, or not at all this night
+    sun = ephem.Sun(obs)
+    obs.date = dt
+    solar_midnight = ephem.Date(obs.next_antitransit(sun)).datetime().replace(tzinfo=UTC)
+    next_noon = ephem.Date(obs.next_transit(sun)).datetime().replace(tzinfo=UTC)
 
     if which_one == 'sunset':
-        return object_ephemeris(ephem.Sun(obs), obs, dt, zone, 'set')['printable']
+        return object_ephemeris(sun, obs, dt, zone, 'set', before=solar_midnight)['printable']
 
     if which_one == 'sunrise':
-        return object_ephemeris(ephem.Sun(obs), obs, dt + AN_HOUR, zone, 'rise')['printable']
+        return object_ephemeris(sun, obs, dt, zone, 'rise', before=next_noon)['printable']
 
     for angle, name in TWILIGHT_TYPES:
         if which_one == f'{name}_end':
-            return object_ephemeris(ephem.Sun(obs), obs, dt, zone, 'set', angle)['printable']
+            return object_ephemeris(sun, obs, dt, zone, 'set', angle, before=solar_midnight)['printable']
         if which_one == f'{name}_begin':
-            return object_ephemeris(ephem.Sun(obs), obs, dt, zone, 'rise', angle)['printable']
+            return object_ephemeris(sun, obs, dt, zone, 'rise', angle, before=next_noon)['printable']
 
     moon = ephem.Moon(obs)
 
@@ -125,16 +129,16 @@ def twilight(which_one: str, lat: str, lng: str, elev: float, zone: str) -> str:
         moonrise = object_ephemeris(moon, obs, dt, zone, 'rise')
         moonset = object_ephemeris(moon, obs, dt, zone, 'set')
         if moonset['data'] and moonrise['data']:
-            if not (12 <= moonset['data'].hour <= 23) and (moonset['data'] < moonrise['data']):
+            if moonset['data'] - dt >= HALF_A_DAY and moonset['data'] < moonrise['data']:
                 moonset = object_ephemeris(moon, obs, dt + A_DAY, zone, 'set')
         return moonset['printable']
 
     if which_one == 'moon_phase':
-        return lunar_phase(dt, zone)
+        return lunar_phase(dt)
 
     if which_one == 'moonset_ante_astro_noon_p':
         moonset = object_ephemeris(moon, obs, dt, zone, 'set')
-        if moonset['data'] and moonset['data'].day == dt.astimezone(ZoneInfo(zone)).day and 12 <= moonset['data'].hour <= 23:
+        if moonset['data'] and moonset['data'] - dt < HALF_A_DAY:
             return 'True'
         return 'False'
 
@@ -175,18 +179,27 @@ def _elevation(latlng, session) -> float:
         return 0.0
 
 
+def _is_public_ip(ip: str) -> bool:
+    """True if ip is a globally routable address that IP geolocation can place."""
+    try:
+        return ipaddress.ip_address(ip).is_global
+    except ValueError:
+        return False
+
+
 def _resolve_location(path: str, requester_ip: str, session):
     """
     Resolve location data for a request.
 
     For named paths, uses hardcoded coordinates and only fetches timezone.
-    For IP-based requests, performs full geolocation lookup.
+    For loopback/private IPs, which can't be geolocated, uses the default location.
+    For public IPs, performs full geolocation lookup.
 
     Returns (place, latlng, elev, address, zone).
     """
     if path in NAMED_LOCATIONS:
         place, latlng, elev, address = NAMED_LOCATIONS[path]
-    elif requester_ip == '127.0.0.1':
+    elif not _is_public_ip(requester_ip):
         place, latlng, elev, address = _DEFAULT_LOCATION
     else:
         latlng = _ip_latlng(requester_ip, session) or _DEFAULT_LOCATION[1]
