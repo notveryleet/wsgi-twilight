@@ -6,3 +6,4 @@ __pycache__
 k8s/
 .venv
 .DS_Store
+tests/
