@@ -1,0 +1,30 @@
+# Routes external HTTP traffic to the twilight Service through ingress-nginx
+# (on minikube: `minikube addons enable ingress`).
+#
+# ingress-nginx sets X-Forwarded-For to the address the visitor connected
+# from, and the app trusts exactly that one hop (TRUSTED_PROXY_HOPS, default 1)
+# to geolocate the visitor. For that address to be the visitor's real IP:
+#   - The controller's Service must keep the client source IP, e.g.
+#     `externalTrafficPolicy: Local` on a LoadBalancer/NodePort controller.
+#   - If another proxy or CDN sits in front of the controller, set
+#     `use-forwarded-headers: "true"` in the controller ConfigMap (and
+#     TRUSTED_PROXY_HOPS to the total number of proxies) so its
+#     X-Forwarded-For is kept rather than replaced.
+# `kubectl port-forward` bypasses the ingress and carries no client IP; the
+# app then falls back to the server's own location.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: twilight
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: twilight
+                port:
+                  number: 80

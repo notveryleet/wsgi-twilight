@@ -12,6 +12,7 @@ import requests
 from flask import Flask, render_template, request
 from geopy.exc import GeopyError
 from geopy.geocoders import GoogleV3
+from werkzeug.middleware.proxy_fix import ProxyFix
 from timezonefinder import TimezoneFinder
 
 _tf = TimezoneFinder()
@@ -29,7 +30,10 @@ HALF_A_DAY = timedelta(hours=12)
 
 GOOGLE_API_KEY: str = os.environ.get('GOOGLE_API_KEY', '')
 
-IPINFO_URL = 'https://ipinfo.io/{0}/json'
+# Number of proxies in front of the app (the ingress) whose X-Forwarded-For entries are trusted
+TRUSTED_PROXY_HOPS = int(os.environ.get('TRUSTED_PROXY_HOPS', '1'))
+
+IPINFO_URL = 'https://ipinfo.io/{0}json'
 ELEVATION_URL = 'https://maps.googleapis.com/maps/api/elevation/json'
 HTTP_TIMEOUT = 5
 
@@ -145,10 +149,10 @@ def twilight(which_one: str, lat: str, lng: str, elev: float, zone: str) -> str:
     return ''
 
 
-def _ip_latlng(ip: str, session):
-    """Look up approximate [lat, lng] for an IP address via ipinfo.io, or None."""
+def _ip_latlng(ip, session):
+    """Look up approximate [lat, lng] for an IP address via ipinfo.io (ours if ip is None), or None."""
     try:
-        resp = session.get(IPINFO_URL.format(ip), timeout=HTTP_TIMEOUT)
+        resp = session.get(IPINFO_URL.format(f'{ip}/' if ip else ''), timeout=HTTP_TIMEOUT)
         resp.raise_for_status()
         lat, lng = resp.json()['loc'].split(',')
         return [float(lat), float(lng)]
@@ -192,17 +196,17 @@ def _resolve_location(path: str, requester_ip: str, session):
     Resolve location data for a request.
 
     For named paths, uses hardcoded coordinates and only fetches timezone.
-    For loopback/private IPs, which can't be geolocated, uses the default location.
-    For public IPs, performs full geolocation lookup.
+    Otherwise geolocates the requester's IP. A loopback/private IP can't be
+    geolocated, so it uses the server's own public IP, which is right for
+    visitors on the server's network.
 
     Returns (place, latlng, elev, address, zone).
     """
     if path in NAMED_LOCATIONS:
         place, latlng, elev, address = NAMED_LOCATIONS[path]
-    elif not _is_public_ip(requester_ip):
-        place, latlng, elev, address = _DEFAULT_LOCATION
     else:
-        latlng = _ip_latlng(requester_ip, session) or _DEFAULT_LOCATION[1]
+        ip = requester_ip if _is_public_ip(requester_ip) else None
+        latlng = _ip_latlng(ip, session) or _DEFAULT_LOCATION[1]
         place, elev, address = 'geocode', None, None
 
     if address is None:
@@ -217,6 +221,7 @@ def _resolve_location(path: str, requester_ip: str, session):
 
 
 application = Flask(__name__)
+application.wsgi_app = ProxyFix(application.wsgi_app, x_for=TRUSTED_PROXY_HOPS)
 
 
 def _render_ephemeris(place, latlng, elev, address, zone, requester_ip):
@@ -248,7 +253,7 @@ def _render_ephemeris(place, latlng, elev, address, zone, requester_ip):
 
 @application.errorhandler(404)
 def page_not_found(error):
-    requester_ip = request.access_route[0]
+    requester_ip = request.remote_addr
     with requests.Session() as session:
         place, latlng, elev, address, zone = _resolve_location('', requester_ip, session)
     return render_template('404.html',
@@ -268,7 +273,7 @@ def page_not_found(error):
 @application.route('/stjohns')
 @application.route('/greenwich')
 def print_ephemeris():
-    requester_ip = request.access_route[0]
+    requester_ip = request.remote_addr
     with requests.Session() as session:
         place, latlng, elev, address, zone = _resolve_location(str(request.path), requester_ip, session)
     return _render_ephemeris(place, latlng, elev, address, zone, requester_ip)
