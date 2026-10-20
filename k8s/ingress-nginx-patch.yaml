@@ -1,0 +1,12 @@
+# Lets ingress-nginx accept X-Forwarded-For from the host reverse proxy
+# (host/Caddyfile), which reaches the controller through `kubectl
+# port-forward`, so its connections arrive from 127.0.0.1 inside the pod.
+# Only that source is trusted; anything else has its X-Forwarded-For replaced.
+# The controller still sends the app a single-entry X-Forwarded-For, so
+# TRUSTED_PROXY_HOPS stays at 1.
+#
+#   kubectl -n ingress-nginx patch configmap ingress-nginx-controller \
+#     --type merge --patch-file k8s/ingress-nginx-patch.yaml
+data:
+  use-forwarded-headers: "true"
+  proxy-real-ip-cidr: "127.0.0.1/32"

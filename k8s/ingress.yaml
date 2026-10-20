@@ -10,6 +10,8 @@
 #     `use-forwarded-headers: "true"` in the controller ConfigMap (and
 #     TRUSTED_PROXY_HOPS to the total number of proxies) so its
 #     X-Forwarded-For is kept rather than replaced.
+# On minikube with the Docker driver the node isn't reachable from outside the
+# host, so host/expose.sh fronts it with Caddy; see k8s/ingress-nginx-patch.yaml.
 # `kubectl port-forward` bypasses the ingress and carries no client IP; the
 # app then falls back to the server's own location.
 apiVersion: networking.k8s.io/v1

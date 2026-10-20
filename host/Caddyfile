@@ -1,0 +1,11 @@
+# Public entry point on the minikube host. Caddy replaces any X-Forwarded-For
+# sent by the visitor with the visitor's address, then hands the request to
+# ingress-nginx through the localhost-only port-forward started by expose.sh.
+{
+	auto_https off
+	admin off
+}
+
+:{$TWILIGHT_PUBLIC_PORT:80} {
+	reverse_proxy 127.0.0.1:{$TWILIGHT_INGRESS_PORT:8080}
+}
